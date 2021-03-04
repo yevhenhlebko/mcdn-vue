@@ -1,0 +1,193 @@
+<template>
+  <v-card :disabled="loadingDashboardDevicesTable">
+    <v-card-title>
+      Report
+      <v-combobox
+        v-model="headerColumnValues"
+        :items="headerColumns"
+        chips
+        solo
+        label="Add/Remove Coloumns"
+        multiple
+        class="flex-grow-0 ml-auto"
+      >
+        <template v-slot:selection="{ attrs, item }">
+          <v-chip
+            v-bind="attrs"
+            close
+            small
+            color="primary lighten-2"
+            outlined
+            @click:close="remove(item)"
+          >
+            {{ item }}
+          </v-chip>
+        </template>
+      </v-combobox>
+    </v-card-title>
+    <v-card-text>
+      <v-data-table
+        id="machines-table"
+        :headers="filtedHeaders"
+        :items="devices"
+        :search="searchQuery"
+        :loading="loadingDashboardDevicesTable"
+        :items-per-page="5"
+        :page.sync="page"
+        class="link-table"
+        hide-default-footer
+        @click:row="productView"
+      >
+        <template v-slot:header.status="{ header }">
+          <v-icon color="primary">$mdi-chevron-double-right</v-icon>
+          {{ header.text }}
+        </template>
+        <template v-slot:header.name="{ header }">
+          <v-icon small color="primary">$mdi-wrench</v-icon>
+          {{ header.text }}
+        </template>
+        <template v-slot:header.capacity="{ header }">
+          <v-icon color="primary">$mdi-trending-up</v-icon>
+          {{ header.text | percentageLabel }}
+        </template>
+        <template v-slot:header.consumption="{ header }">
+          <v-icon class="mdi-rotate-90" color="primary">$mdi-battery-30</v-icon>
+          {{ header.text }}
+        </template>
+        <template v-slot:header.location_id="{ header }">
+          <v-icon small color="primary">$mdi-factory</v-icon>
+          {{ header.text }}
+        </template>
+
+        <!-- -->
+        <template v-slot:item.status="{ item }">
+          <v-icon :color="getColor(item)">{{ getIcon(item) }}</v-icon>
+        </template>
+        <template v-slot:item.location_id="{ item }">
+          {{ locationName(item.location_id) }}
+        </template>
+        <template v-slot:item.zone_id="{ item }">
+          {{ zoneName(item.zone_id) }}
+        </template>
+      </v-data-table>
+      <v-pagination
+        v-model="page"
+        :length="pageCountReport"
+        :total-visible="7"
+        @input="getDevicesAnalytics({ page: page, location_id: location })"
+      ></v-pagination>
+    </v-card-text>
+  </v-card>
+</template>
+
+<script>
+import { mapState, mapGetters, mapActions } from 'vuex'
+/*
+|---------------------------------------------------------------------
+| Machines Table Card Component
+|---------------------------------------------------------------------
+|
+| Machines table card to list machines and their properties
+|
+*/
+export default {
+  components: {
+  },
+  props: {
+    location: {
+      type: Number,
+      default: 0
+    }
+  },
+  data () {
+    return {
+      headers: [
+        { text: 'Running', align: 'center', value: 'status' },
+        { text: 'Machine Name', align: 'start', value: 'name' },
+        { text: 'Capacity Utilization', align: 'center', value: 'capacity' },
+        { text: 'Consumption', align: 'center', value: 'consumption' },
+        { text: 'Locations', align: 'center', value: 'location_id' },
+        { text: 'Zones', align: 'center', value: 'zone_id' }
+      ],
+      page: 1,
+      hours: 8,
+      searchQuery: '',
+      row: '',
+      headerColumnValues: ['Running', 'Machine Name', 'Capacity Utilization', 'Consumption', 'Locations', 'Zones']
+    }
+  },
+  computed: {
+    ...mapState({
+      devices: (state) => state.devices.data,
+      loadingDashboardDevicesTable: (state) => state.devices.loadingDashboardDevicesTable,
+      pageCountReport: (state) => state.devices.pageCountReport
+    }),
+    ...mapGetters({
+      locationName: 'locations/locationName',
+      zoneName: 'zones/zoneName'
+    }),
+    filtedHeaders() {
+      return this.headers.filter((header) => {
+        return this.headerColumnValues.includes(header.text)
+      })
+    },
+    headerColumns() {
+      return this.headers.map((header) => header.text)
+    }
+  },
+  mounted() {
+    this.getDevicesAnalytics({
+      page: this.page,
+      location_id: this.location
+    })
+  },
+  methods: {
+    ...mapActions({
+      getDevicesAnalytics: 'devices/getDevicesAnalytics'
+    }),
+    open(item) { },
+    getColor (item) {
+      // if (item.status === 'Warning') return 'orange'
+      // else if (item.status === 'Alarm') return 'green'
+      // else if (item.status === 'Not') return 'red'
+      // else return 'green'
+      // if (item.status) return 'green'
+      // else return 'primary'
+      return item.status ? 'primary' : 'red'
+    },
+    getIcon(item) {
+      // if (item.status === 'Warning') return '$mdi-alert'
+      // else if (item.status === 'Alarm') return '$mdi-check-circle-outline'
+      // else if (item.status === 'Not') return '$mdi-bell-circle'
+      // else return '$mdi-check-circle-outline'
+      if (item.status) return '$mdi-check-circle-outline'
+      else return '$mdi-lan-disconnect'
+    },
+    productView(item) {
+      if (item.location_id && item.zone_id) {
+        this.$router.push({
+          name: 'product-acs-dashboard',
+          params: {
+            location: item.location_id,
+            zone: item.zone_id,
+            configurationId: item.machine_id,
+            productId: item.serial_number
+          }
+        })
+      } else {
+        this.$router.push({
+          name: 'product-details',
+          params: {
+            configurationId: item.machine_id,
+            productId: item.serial_number
+          }
+        })
+      }
+    },
+    remove (item) {
+      this.headerColumnValues.splice(this.headerColumnValues.indexOf(item), 1)
+      this.headerColumnValues = [...this.headerColumnValues]
+    }
+  }
+}
+</script>
