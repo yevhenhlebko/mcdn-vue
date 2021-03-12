@@ -8,7 +8,18 @@ const module = {
     savingMaterial: false,
     savingMaterialLocation: false,
     data: [],
-    materialLocations: []
+    materialLocations: [],
+
+    loadingReports: false,
+    reports: [],
+
+    systemInventoryReports: [],
+
+    loadingBlenders: false,
+    blenders: [],
+
+    deletingReport: false,
+    exportingReport: false
   },
 
   actions: {
@@ -146,6 +157,99 @@ const module = {
       } finally {
         commit('SET_SAVING_MATERIAL_LOCATION', false)
       }
+    },
+
+    async getBlenders ({ commit, dispatch }, payload) {
+      commit('SET_LOADING_BLENDERS', true)
+
+      try {
+        const response = await api.getBlenders(payload)
+
+        commit('SET_BLENDERS', response)
+      } catch (error) {
+        console.log(error)
+        throw error
+      } finally {
+        commit('SET_LOADING_BLENDERS', false)
+      }
+    },
+
+    async getReport ({ commit, dispatch }, payload) {
+      commit('SET_LOADING_REPORTS', true)
+
+      try {
+        const response = await api.getReport(payload)
+
+        commit('SET_REPORTS', response.tracks)
+      } catch (error) {
+        console.log(error)
+        throw error
+      } finally {
+        commit('SET_LOADING_REPORTS', false)
+      }
+    },
+
+    async deleteReport ({ commit, dispatch }, payload) {
+      commit('SET_DELETING_REPORT', true)
+
+      try {
+        const response = await api.deleteReport(payload)
+
+        dispatch('app/showSuccess', response, { root: true })
+      } catch (error) {
+        console.log(error)
+        throw error
+      } finally {
+        commit('SET_DELETING_REPORT', false)
+      }
+    },
+
+    async exportReport ({ commit, dispatch }, payload) {
+      commit('SET_EXPORTING_REPORT', true)
+
+      try {
+        const response = await api.exportReport(payload)
+
+        return response
+      } catch (error) {
+        dispatch('app/showError', {
+          'message': 'Exporting report failed'
+        }, { root: true })
+
+        throw error
+      } finally {
+        commit('SET_EXPORTING_REPORT', false)
+      }
+    },
+
+    async getSystemInventoryReport ({ commit, dispatch }, payload) {
+      commit('SET_LOADING_REPORTS', true)
+
+      try {
+        const response = await api.getSystemInventoryReport(payload)
+
+        commit('SET_SYSTEM_INVENTORY_REPORTS', Object.keys(response.keyed_materials).map((r) => response.keyed_materials[r]))
+      } catch (error) {
+        console.log(error)
+        throw error
+      } finally {
+        commit('SET_LOADING_REPORTS', false)
+      }
+    },
+
+    async exportSystemInventoryReport ({ commit, dispatch }, payload) {
+      commit('SET_EXPORTING_REPORT', true)
+
+      try {
+        const response = await api.exportSystemInventoryReport(payload)
+
+        return response
+      } catch (error) {
+        console.log(error)
+        throw error
+      } finally {
+        commit('SET_EXPORTING_REPORT', false)
+      }
     }
   },
 
@@ -153,10 +257,18 @@ const module = {
     SET_DATA(state, materials) { state.data = materials },
     SET_LOADING_MATERIALS(state, loading) { state.loadingMaterials = loading },
     SET_SAVING_MATERIAL(state, saving) { state.savingMaterial = saving },
+    SET_LOADING_BLENDERS(state, loading) { state.loadingBlenders = loading },
+    SET_DELETING_REPORT(state, deleting) { state.deletingReport = deleting },
+    SET_EXPORTING_REPORT(state, exporting) { state.exportingReport = exporting },
 
     SET_MATERIAL_LOCATIONS(state, locations) { state.materialLocations = locations },
     SET_LOADING_MATERIAL_LOCATIONS(state, loading) { state.loadingMaterialLocations = loading },
-    SET_SAVING_MATERIAL_LOCATION(state, saving) { state.savingMaterialLocation = saving }
+    SET_SAVING_MATERIAL_LOCATION(state, saving) { state.savingMaterialLocation = saving },
+    SET_REPORTS(state, reports) { state.reports = reports },
+    SET_SYSTEM_INVENTORY_REPORTS(state, reports) { state.systemInventoryReports = reports },
+    SET_BLENDERS(state, data) {
+      state.blenders = data.blenders
+    }
   }
 }
 
