@@ -8,9 +8,20 @@
       <v-card-title>
         Inventories
         <v-btn
-          icon
+          v-if="inventory.inventory_material"
           small
           class="ml-auto"
+          :loading="togglingInventoryTrack"
+          :disabled="togglingInventoryTrack || !canViewInventory"
+          color="primary"
+          @click="startClicked()"
+        >
+          {{ inventory.inventory_material.in_progress ? 'Stop System Inventory' : 'Start System Inventory' }}
+        </v-btn>
+        <v-btn
+          icon
+          small
+          class="ml-1"
           @click="$emit('reload')"
         >
           <v-icon>$mdi-refresh</v-icon>
@@ -29,11 +40,13 @@
               <div class="d-flex">
                 <div class="subtitle-1 black--text mb-1 font-italic">{{ `Hopper ${i + 1}` }}</div>
                 <v-btn
-                  icon
-                  class="ml-auto"
+                  class="ml-2"
+                  small
+                  outlined
+                  :disabled="userRole === 'acs_admin'"
                   @click="editMaterial(i)"
                 >
-                  <v-icon small>$mdi-pencil</v-icon>
+                  Add Material/Location
                 </v-btn>
               </div>
               <div class=""><span class="display-1">{{ inv }}</span><span>{{ inventory.unit }}</span></div>
@@ -131,32 +144,34 @@ export default {
   },
   computed: {
     ...mapState({
-      loadingInventories: (state) => state.bdBlenderAnalytics.loadingInventories,
-      inventory: (state) => state.bdBlenderAnalytics.inventory,
-      savingMaterial: (state) => state.bdBlenderAnalytics.savingMaterial,
+      userRole: (state) => state.auth.user.role,
       materials: (state) => state.materials.data,
       locations: (state) => state.materials.materialLocations
     }),
+    ...mapState('bdBlenderAnalytics', ['loadingInventories', 'togglingInventoryTrack', 'inventory', 'savingMaterial']),
+    ...mapGetters('auth', ['canViewInventory']),
     dialogText () {
       return `Feeder ${this.editedIndex + 1}`
     }
   },
   mounted() {
     this.getInventory({ serialNumber: this.serialNumber })
-    this.getMaterials()
-    this.getMaterialLocations()
+    if (this.canViewInventory) {
+      this.getMaterials()
+      this.getMaterialLocations()
+    }
   },
   methods: {
     ...mapActions({
       getMaterials: 'materials/getMaterials',
       updateInventoryMaterial: 'bdBlenderAnalytics/updateInventoryMaterial',
       getMaterialLocations: 'materials/getMaterialLocations',      
-      getInventory: 'bdBlenderAnalytics/getInventory'
+      getInventory: 'bdBlenderAnalytics/getInventory',
+      toggleInventoryTracking: 'bdBlenderAnalytics/toggleInventoryTracking'
     }),
 
     editMaterial(item) {
       this.editedIndex = item
-
       this.editItem.material = this.inventory.inventory_material[`material${item + 1}_id`]
       this.editItem.location = this.inventory.inventory_material[`location${item + 1}_id`]
 
@@ -185,19 +200,22 @@ export default {
         }
       }
     },
+
+    startClicked() {
+      this.toggleInventoryTracking({
+        serialNumber: this.serialNumber
+      })
+    },
+
     materialText(ind) {
-      let m = null
+      const m = this.materials.find((material) => material.id === this.inventory.inventory_material[`material${ind + 1}_id`])
 
-      m = m = this.materials.find((material) => material.id === this.inventory.inventory_material[`material${ind + 1}_id`])
-
-      return m ? m.material : 'Not Selected'
+      return m ? m.material : 'Material Not Selected'
     },
     locationText(ind) {
-      let m = null
+      const m = this.locations.find((location) => location.id === this.inventory.inventory_material[`location${ind + 1}_id`])
 
-      m = this.locations.find((location) => location.id === this.inventory.inventory_material[`location${ind + 1}_id`])
-
-      return m ? m.location : 'Not Selected'
+      return m ? m.location : 'Location Not Selected'
     }
   }
 }
