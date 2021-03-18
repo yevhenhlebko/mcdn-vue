@@ -12,7 +12,7 @@
 
               <v-list-item-action class="my-1">
                 <div class="align-center" style="width: 100px;">
-                  <v-icon left :color="item ? 'green' : 'grey'">$mdi-circle</v-icon> {{ item ? 'On' : 'Off' }}
+                  <v-icon left :color="item ? 'acs-online' : 'acs-offline'">$mdi-circle</v-icon> {{ item ? 'On' : 'Off' }}
                 </div>
               </v-list-item-action>
             </v-list-item>
@@ -22,12 +22,12 @@
           <v-list>
             <v-list-item v-for="(item, i) in blowBacks.slice(6)" :key="i" style="min-height: 36px;">
               <v-list-item-content class="py-1">
-                {{ `Pump ${i + 1}` }}
+                {{ `Pump ${i + 7}` }}
               </v-list-item-content>
 
               <v-list-item-action class="my-1">
                 <div class="align-center" style="width: 100px;">
-                  <v-icon left :color="item ? 'green' : 'grey'">$mdi-circle</v-icon> {{ item ? 'On' : 'Off' }}
+                  <v-icon left :color="item ? 'acs-online' : 'acs-offline'">$mdi-circle</v-icon> {{ item ? 'On' : 'Off' }}
                 </div>
               </v-list-item-action>
             </v-list-item>
