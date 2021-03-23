@@ -101,6 +101,7 @@ export default {
   deleteMaterialLocation(payload) {
     return api.$delete(`/material-locations/${payload.id}`)
   },
+
   /**
   * Get all blenders
   *
@@ -111,59 +112,59 @@ export default {
   getBlenders(payload) {
     return api.$post('/materials/blenders', payload)
   },
-  
+
   /**
-    * Get material report
-    *
-    * @param {Object} data for location
-    * @example
-    *
-    *     getReport(payload)
-    */
+  * Get material report
+  *
+  * @param {Object} data for location
+  * @example
+  *
+  *     getReport(payload)
+  */
   getReport(payload) {
     return api.$post('/materials/report', payload)
   },
-  
+
   /**
-    * Delete report
-    *
-    * @example
-    *
-    *     deleteReport(payload)
-    */
+  * Delete report
+  *
+  * @example
+  *
+  *     deleteReport(payload)
+  */
   deleteReport(payload) {
     return api.$delete(`/materials/report/${payload.id}`, payload)
   },
-  
+
   /**
-    * Export report
-    *
-    * @example
-    *
-    *     exportReport(payload)
-    */
+  * Export report
+  *
+  * @example
+  *
+  *     exportReport(payload)
+  */
   exportReport(payload) {
     return api.$post('/materials/export', payload)
   },
-  
+
   /**
-    * Get system inventory report
-    *
-    * @example
-    *
-    *     getSystemInventoryReport(payload)
-    */
+  * Get system inventory report
+  *
+  * @example
+  *
+  *     getSystemInventoryReport(payload)
+  */
   getSystemInventoryReport(payload) {
     return api.$post('/materials/system-inventory-report', payload)
   },
-  
+
   /**
-    * Export system inventory report
-    *
-    * @example
-    *
-    *     exportSystemInventoryReport(payload)
-    */
+  * Export system inventory report
+  *
+  * @example
+  *
+  *     exportSystemInventoryReport(payload)
+  */
   exportSystemInventoryReport(payload) {
     return api.$post('/materials/system-inventory-report/export', payload)
   }

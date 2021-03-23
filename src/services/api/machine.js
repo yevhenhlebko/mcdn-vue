@@ -21,5 +21,20 @@ export default {
   },
   getWeeklyRunningHours(id) {
     return api.$get(`/analytics/weekly-running-hours/${id}`)
+  },
+  getTags(id) {
+    return api.$get(`/machine-tags/${id}`)
+  },
+  getDataToolSeries(data) {
+    return api.$post('/analytics/data-tool-series', data)
+  },
+  requestService(data) {
+    return api.$post('/analytics/request-service', data)
+  },
+  saveMachine(data) {
+    return api.$post('/analytics/save-machine', data)
+  },
+  getSavedStatus(data) {
+    return api.$post('/analytics/get-saved-status', data)
   }
 }
