@@ -107,6 +107,69 @@ const getDashboardMachinesTable = async ({ commit }, data) => {
   }
 }
 
+const getTags = async ({ state, commit }, machineId) => {
+  try {
+    const response = await machineAPI.getTags(machineId)
+
+    commit('SET_TAGS', response.tags)
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getDataToolSeries = async ({ state, commit }, payload) => {
+  commit('SET_LOADING_DATA_TOOL_SERIES', true)
+  
+  try {
+    const response = await machineAPI.getDataToolSeries(payload)
+
+    commit('SET_DATA_TOOL_SERIES', response.series)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_LOADING_DATA_TOOL_SERIES', false)
+  }
+}
+
+const updateDataToolOptions = async ({ commit }, payload) => {
+  commit('SET_DATA_TOOL_OPTIONS', payload)
+}
+
+const requestService = async ({ commit, dispatch }, payload) => {
+  try {
+    const response = await machineAPI.requestService(payload)
+
+    dispatch('app/showSuccess', response.message, { root: true })
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const saveMachine = async ({ commit, dispatch }, payload) => {
+  try {
+    const response = await machineAPI.saveMachine(payload)
+
+    commit('SET_SAVED_MACHINE_STATUS', response.status)
+    dispatch('app/showSuccess', response.message, { root: true })
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getSavedStatus = async ({ commit, dispatch }, payload) => {
+  try {
+    const response = await machineAPI.getSavedStatus(payload)
+
+    commit('SET_SAVED_MACHINE_STATUS', response.status)
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const setSavedMachineStatus = ({ commit }, status) => {
+  commit('SET_SAVED_MACHINES_STATUS', status)
+}
+
 export default {
   initAcsDashboard,
   initLocationsTable,
@@ -115,5 +178,12 @@ export default {
   getDashboardMachinesTable,
   changeSelectedCompany,
   getSystemStates,
-  getWeeklyRunningHours
+  getWeeklyRunningHours,
+  getTags,
+  getDataToolSeries,
+  updateDataToolOptions,
+  requestService,
+  saveMachine,
+  getSavedStatus,
+  setSavedMachineStatus
 }

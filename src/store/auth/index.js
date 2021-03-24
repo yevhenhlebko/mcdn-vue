@@ -55,7 +55,7 @@ const module = {
 
     error: null,
     loading: true,
-    button_loading: false
+    buttonLoading: false
   },
 
   actions: {
@@ -255,11 +255,11 @@ const module = {
       state.user.companyId = null
     },
     BUTTON_LOAD(state) {
-      state.button_loading = true
+      state.buttonLoading = true
     },
 
     BUTTON_CLEAR(state) {
-      state.button_loading = false
+      state.buttonLoading = false
     },
 
     SET_LOADING_TIME_ZONE(state, loading) { state.loadingTimezone = loading },
@@ -278,7 +278,9 @@ const module = {
     canCreateCompanies: (state) => ['acs_admin', 'acs_manager'].includes(state.user.role),
     canViewCompanies: (state) => ['acs_admin', 'acs_manager', 'acs_viewer'].includes(state.user.role),
     canImportDevices: (state) => ['acs_admin', 'acs_manager'].includes(state.user.role),
-    canCreateCustomerUser: (state) => state.user.role === 'customer_admin'
+    canCreateCustomerUser: (state) => state.user.role === 'customer_admin',
+    canViewInventory: (state) => state.user.role !== 'acs_admin',
+    canGetMaterialsAndLocations: (state) => state.user.role === 'customer_manager'
   }
 }
 

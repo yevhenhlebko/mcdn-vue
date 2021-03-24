@@ -4,7 +4,7 @@ import router from '../../router'
 const module = {
   namespaced: true,
   state: {
-    button_loading: false,                    // loading status
+    buttonLoading: false,                    // loading status
     isTableLoading: false,
 
     error: null,
@@ -60,7 +60,7 @@ const module = {
         commit('CLEAR_ERROR')
         dispatch('app/showSuccess', response.data, { root: true })
         router.push({
-          name: 'companies-list'
+          name: 'companies'
         })
       } catch (error) {
         if (error.response.status === 422) {
@@ -154,11 +154,11 @@ const module = {
 
     // BUTTON load
     BUTTON_LOAD(state) {
-      state.button_loading = true
+      state.buttonLoading = true
     },
 
     BUTTON_CLEAR(state) {
-      state.button_loading = false
+      state.buttonLoading = false
     },
 
     TABLE_LOAD(state) {

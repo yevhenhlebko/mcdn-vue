@@ -20,18 +20,21 @@ const module = {
     loadingToggleActiveDevices: false,
 
     error: null,
-    table_loading: false,               // status of loading devices into the table
-    import_btn_loading: false,          // status of uploading devices
-    refresh_btn_loading: false,         // status of refreshing SIM
-    activate_button_loading: false,     // status of activating SIM
-    suspend_btn_loading: false,         // status of deactivating SIM
-    remote_web_btn_loading: false,         // status of Remote WebUI
-    remote_cli_btn_loading: false,         // status of Remote CLI
-    assign_loading: false,              // status of uploading devices from excel file
-    register_button_loading: false,
+    tableLoading: false,               // status of loading devices into the table
+    importBtnLoading: false,          // status of uploading devices
+    refreshBtnLoading: false,         // status of refreshing SIM
+    activateButtonLoading: false,     // status of activating SIM
+    suspendBtnLoading: false,         // status of deactivating SIM
+    remoteWebBtnLoading: false,         // status of Remote WebUI
+    remoteCliBtnLoading: false,         // status of Remote CLI
+    assignLoading: false,              // status of uploading devices from excel file
+    registerButtonLoading: false,
     loadingTableMachineMapping: false,
     loadingBtnAssignZoneToMachine: false,
     loadingDashboardDevicesTable: false,    //Devices table loading value in ACS dashboard and user dashboard pages
+    loadingDashboardSavedMachinesTable: false,
+    savedMachines: [],
+    savedMachinesPageCountReport: 0,
 
     downtimePlanBtnLoading: false,
     downtimePlansTableLoading: false,
@@ -146,25 +149,6 @@ const module = {
         commit('ASSIGN_CLEAR')
       }
     },
-    async updateRegistered({
-      commit, dispatch
-    }, data) {
-      commit('REGISTER_BTN_LOAD')
-
-      try {
-        const response = await deviceAPI.updateRegistered(data)
-
-        commit('SET_REGISTERED', data)
-        dispatch('app/showSuccess', response.data, { root: true })
-      } catch (error) {
-        console.log(error)
-        dispatch('app/showError', {
-          error: error.response.data
-        }, { root: true })
-      } finally {
-        commit('REGISTER_BTN_CLEAR')
-      }
-    },
 
     async submitDeviceConfig({
       commit, dispatch
@@ -189,6 +173,7 @@ const module = {
       commit
     }) {
       commit('SET_LOADING_TABLE_MACHINE_MAPPING', true)
+      commit('SET_DATA', [])
 
       try {
         const response = await deviceAPI.getCustomerDevices()
@@ -202,7 +187,7 @@ const module = {
     },
 
     // Get devices with analytics in dashboard page
-    async getDevicesAnalytics({ commit }, { page = 1, location_id = 0, itemsPerPage = 5 }) {
+    async getDevicesAnalytics({ commit }, { page = 1, location_id = 0, itemsPerPage = 50 }) {
       commit('SET_LOADING_DASHBOARD_DEVICES_TABLE', true)
       commit('SET_DATA', [])
 
@@ -220,6 +205,26 @@ const module = {
         console.log(error)
       } finally {
         commit('SET_LOADING_DASHBOARD_DEVICES_TABLE', false)
+      }
+    },
+
+    async getSavedMachines({ commit }, { page = 1, location_id = 0, itemsPerPage = 10 }) {
+      commit('SET_LOADING_SAVED_MACHINES', true)
+      commit('SET_SAVED_MACHINES', [])
+
+      try {
+        const data = {
+          itemsPerPage,
+          page
+        }
+        const response = await deviceAPI.getSavedMachines(data)
+
+        commit('SET_SAVED_MACHINES', response.data.devices.data)
+        commit('SET_REPORT_SAVED_MACHINES_PAGINATION', response.data.devices.last_page)
+      } catch (error) {
+        console.log(error)
+      } finally {
+        commit('SET_LOADING_SAVED_MACHINES', false)
       }
     },
 
@@ -398,59 +403,59 @@ const module = {
       state.downtimePlanBtnLoading = data
     },
     IMPORT_BUTTON_LOAD(state) {
-      state.import_btn_loading = true
+      state.importBtnLoading = true
     },
     IMPORT_BUTTON_CLEAR(state) {
-      state.import_btn_loading = false
+      state.importBtnLoading = false
     },
     ASSIGN_LOAD(state) {
-      state.assign_loading = true
+      state.assignLoading = true
     },
     ASSIGN_CLEAR(state) {
-      state.assign_loading = false
+      state.assignLoading = false
     },
     TABLE_LOAD(state) {
-      state.table_loading = true
+      state.tableLoading = true
     },
     TABLE_LOAD_CLEAR(state) {
-      state.table_loading = false
+      state.tableLoading = false
     },
     REGISTER_BTN_LOAD(state) {
-      state.register_button_loading = true
+      state.registerButtonLoading = true
     },
     REGISTER_BTN_CLEAR(state) {
-      state.register_button_loading = false
+      state.registerButtonLoading = false
     },
     SET_LOADING_DEVICE_CONFIG(state, isLoading) { state.sendingDeviceConfig = isLoading },
     QUERY_BTN_LOAD(state) {
-      state.refresh_btn_loading = true
+      state.refreshBtnLoading = true
     },
     QUERY_BTN_CLEAR(state) {
-      state.refresh_btn_loading = false
+      state.refreshBtnLoading = false
     },
     ACTIVATE_BTN_LOAD(state) {
-      state.activate_button_loading = true
+      state.activateButtonLoading = true
     },
     ACTIVATE_BTN_CLEAR(state) {
-      state.activate_button_loading = false
+      state.activateButtonLoading = false
     },
     SUSPEND_BTN_LOAD(state) {
-      state.suspend_btn_loading = true
+      state.suspendBtnLoading = true
     },
     SUSPEND_BTN_CLEAR(state) {
-      state.suspend_btn_loading = false
+      state.suspendBtnLoading = false
     },
     REMOTE_WEB_BTN_LOAD(state) {
-      state.remote_web_btn_loading = true
+      state.remoteWebBtnLoading = true
     },
     REMOTE_WEB_BTN_CLEAR(state) {
-      state.remote_web_btn_loading = false
+      state.remoteWebBtnLoading = false
     },
     REMOTE_CLI_BTN_LOAD(state) {
-      state.remote_cli_btn_loading = true
+      state.remoteCliBtnLoading = true
     },
     REMOTE_CLI_BTN_CLEAR(state) {
-      state.remote_cli_btn_loading = false
+      state.remoteCliBtnLoading = false
     },
     SET_DATA(state, devices) {
       state.data = devices
@@ -500,7 +505,14 @@ const module = {
     },
     SET_REPORT_PAGINATION(state, count) { state.pageCountReport = count },
     SET_DOWNTIME_PLANS(state, plans) { state.downtimePlans = plans },
-    SET_LOADING_ACTIVE_DEVICES(state, isLoading) { state.loadingToggleActiveDevices = isLoading }
+    SET_LOADING_ACTIVE_DEVICES(state, isLoading) { state.loadingToggleActiveDevices = isLoading },
+    SET_LOADING_SAVED_MACHINES(state, isLoading) { state.loadingDashboardSavedMachinesTable = isLoading },
+    SET_SAVED_MACHINES(state, data) {
+      state.savedMachines = data
+    },
+    SET_REPORT_SAVED_MACHINES_PAGINATION(state, count) {
+      state.savedMachinesPageCountReport = count
+    }
   },
 
   getters: {
