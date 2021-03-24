@@ -4,9 +4,15 @@ export default {
   SET_MACHINES(state, machines) {
     state.machines = machines
   },
+
+  SET_SAVED_MACHINE_STATUS(state, status) {
+    state.isSavedMachine = status
+  },
+
   SET_SELECTED_COMPANY(state, company) {
     state.selectedCompany = company
   },
+
   SET_LOADING_RECIPE(state, data) {
     state.loadingRecipe = data
   },
@@ -61,5 +67,16 @@ export default {
   SET_RUNNING_PERCENTAGE(state, totalRunningPercentage) { state.totalRunningPercentage = totalRunningPercentage },
   SET_RECIPE_VALUES(state, recipeValues) { state.recipeValues = recipeValues },
 
-  SET_DOWNTIME_DISTRIBUTION(state, data) { state.downtimeDistribution = data }
+  SET_DOWNTIME_DISTRIBUTION(state, data) { state.downtimeDistribution = data },
+
+  SET_LOADING_DATA_TOOL_SERIES(state, loading) { state.loadingDataToolSeries = loading },
+  SET_DATA_TOOL_SERIES(state, series) { state.dataToolSeries = series },
+  SET_TAGS(state, tags) {
+    state.tags = tags
+    state.selectedTags = tags.slice(0, 6)
+  },
+  SET_DATA_TOOL_OPTIONS(state, option) {
+    state.dataToolTimeRange = option.timeRange
+    state.selectedTags = option.selectedTags
+  }
 }

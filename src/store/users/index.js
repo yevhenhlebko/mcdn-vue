@@ -8,7 +8,7 @@ const module = {
     user: null,
     error: null,
     isUsersTableLoading: false,
-    button_loading: false
+    buttonLoading: false
   },
 
   actions: {
@@ -44,11 +44,11 @@ const module = {
         dispatch('app/showSuccess', response.data, { root: true })
         if (rootState.auth.user.role === 'acs_admin')
           router.push({
-            name: 'acs-users-list'
+            name: 'acs-users'
           })
         else if (rootState.auth.user.role === 'customer_admin')
           router.push({
-            name: 'users-list'
+            name: 'users'
           })
       } catch (error) {
         if (error.response.status === 422) {
@@ -108,10 +108,10 @@ const module = {
     },
     TABLE_LOAD(state, loading) { state.isUsersTableLoading = loading },
     BUTTON_LOAD(state) {
-      state.button_loading = true
+      state.buttonLoading = true
     },
     BUTTON_CLEAR(state) {
-      state.button_loading = false
+      state.buttonLoading = false
     }
   },
 

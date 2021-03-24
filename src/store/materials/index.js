@@ -257,6 +257,7 @@ const module = {
     SET_DATA(state, materials) { state.data = materials },
     SET_LOADING_MATERIALS(state, loading) { state.loadingMaterials = loading },
     SET_SAVING_MATERIAL(state, saving) { state.savingMaterial = saving },
+    SET_LOADING_REPORTS(state, loading) { state.loadingReports = loading },
     SET_LOADING_BLENDERS(state, loading) { state.loadingBlenders = loading },
     SET_DELETING_REPORT(state, deleting) { state.deletingReport = deleting },
     SET_EXPORTING_REPORT(state, exporting) { state.exportingReport = exporting },
