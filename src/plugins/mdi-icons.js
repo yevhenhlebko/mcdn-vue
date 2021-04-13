@@ -66,5 +66,6 @@ export {
   mdiBlockHelper,
   mdiCog,
   mdiDatabaseRemove,
-  mdiWifiOff
+  mdiWifiOff,
+  mdiFileChartOutline
 } from '@mdi/js'

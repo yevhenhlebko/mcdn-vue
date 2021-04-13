@@ -170,6 +170,32 @@ const setSavedMachineStatus = ({ commit }, status) => {
   commit('SET_SAVED_MACHINES_STATUS', status)
 }
 
+const getMachines = async ({ commit }) => {
+  commit('SET_REPORT_LOADING', true)
+  try {
+    const response = await machineAPI.getMachines()
+
+    commit('SET_REPORT_MACHINES', response.machines)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_REPORT_LOADING', false)
+  }
+}
+
+const getMachineTags = async ({ commit }, payload) => {
+  commit('SET_REPORT_LOADING', true)
+  try {
+    const response = await machineAPI.getMachineTags(payload)
+
+    commit('SET_REPORT_MACHINE_TAGS', response.tags)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_REPORT_LOADING', false)
+  }
+}
+
 export default {
   initAcsDashboard,
   initLocationsTable,
@@ -185,5 +211,7 @@ export default {
   requestService,
   saveMachine,
   getSavedStatus,
-  setSavedMachineStatus
+  setSavedMachineStatus,
+  getMachines,
+  getMachineTags
 }

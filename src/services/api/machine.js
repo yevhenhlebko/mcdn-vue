@@ -36,5 +36,11 @@ export default {
   },
   getSavedStatus(data) {
     return api.$post('/analytics/get-saved-status', data)
+  },
+  getMachines() {
+    return api.$get('/analytics/get-machines')
+  },
+  getMachineTags(data) {
+    return api.$post('/analytics/get-machine-tags', data)
   }
 }

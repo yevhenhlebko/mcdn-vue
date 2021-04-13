@@ -99,7 +99,7 @@ export default [{
     customerAdmin: true
   }
 }, {
-  path: '/materials',
+  path: '/materials/material-locations',
   name: 'materials',
   component: () => import(/* webpackChunkName: "materials" */ '@/pages/materials/MaterialLocationsPage.vue'),
   meta: {
@@ -116,6 +116,13 @@ export default [{
   path: '/materials/system-inventory-report',
   name: 'materials-system-inventory-report',
   component: () => import(/* webpackChunkName: "materials-report" */ '@/pages/materials/SystemInventoryReport.vue'),
+  meta: {
+    customerAdmin: true
+  }
+}, {
+  path: '/reports',
+  name: 'machines-report',
+  component: () => import(/* webpackChunkName: "machines-report" */ '@/pages/reports/ReportsPage.vue'),
   meta: {
     customerAdmin: true
   }

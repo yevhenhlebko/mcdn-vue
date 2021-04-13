@@ -78,5 +78,14 @@ export default {
   SET_DATA_TOOL_OPTIONS(state, option) {
     state.dataToolTimeRange = option.timeRange
     state.selectedTags = option.selectedTags
+  },
+  SET_REPORT_MACHINES(state, machines) {
+    state.reportMachines = machines
+  },
+  SET_REPORT_LOADING(state, value) {
+    state.isReportLoading = value
+  },
+  SET_REPORT_MACHINE_TAGS(state, data) {
+    state.reportMachineTags = data
   }
 }

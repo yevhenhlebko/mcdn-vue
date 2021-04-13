@@ -4,11 +4,14 @@ import getters from './getters'
 
 const state = {
   machines: [],
+  reportMachines: [],
+  reportMachineTags: [],
   selectedId: 0,
 
   selectedCompany: null,
 
   isSavedMachine: false,
+  isReportLoading: false,
   
   // Accumeter Ovation Continuous Blender
   actualRecipe2Values: [],
