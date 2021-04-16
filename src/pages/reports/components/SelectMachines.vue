@@ -18,7 +18,7 @@
       </v-card-text>
       <v-divider></v-divider>
       <div class="mt-2 pb-3 text-right">
-        <v-btn color="grey lighten-2" depressed>Cancel</v-btn>
+        <v-btn color="grey lighten-2" depressed @click="$emit('cancel')">Back</v-btn>
         <v-btn class="ml-2" depressed color="primary" @click="$emit('setReportMachines', machineIds)">Next Step</v-btn>
       </div>
     </v-card>
@@ -39,13 +39,7 @@ export default {
       isReportLoading: (state) => state.machines.isReportLoading
     })
   },
-  mounted() {
-    this.getMachines()
-  },
   methods: {
-    ...mapActions({
-      getMachines: 'machines/getMachines'
-    }),
     handleSelectMahine() {
       if (this.machineIds.length > 3) {
         this.machineIds.pop()

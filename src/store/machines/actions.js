@@ -196,6 +196,56 @@ const getMachineTags = async ({ commit }, payload) => {
   }
 }
 
+const generateMachinesReport = async ({ commit, dispatch }, payload) => {
+  commit('SET_REPORT_LOADING', true)
+  commit('REPORT_GENERATE_COMPLETED', false)
+  try {
+    const response = await machineAPI.generateMachinesReport(payload)
+
+    dispatch('app/showSuccess', response.message, { root: true })
+
+    commit('REPORT_GENERATE_COMPLETED', true)
+    commit('SET_REPORT_NAME', response.filename)
+
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_REPORT_LOADING', false)
+  }
+}
+
+const getReportsList = async ({ commit }) => {
+  commit('SET_REPORT_LIST_LOADING', true)
+  try {
+    const response = await machineAPI.getMachinesReportList()
+
+    commit('SET_REPORT_LIST', response.reports)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_REPORT_LIST_LOADING', false)
+  }
+}
+
+const deleteReport = async ({ commit, dispatch }, payload) => {
+  commit('SET_REPORT_LIST_LOADING', true)
+  try {
+    const response = await machineAPI.deleteMachinesReport(payload)
+
+    if (response.status) {
+      dispatch('app/showSuccess', response.message, { root: true })
+    } else {
+      dispatch('app/showError', response.message, { root: true })
+    }
+    
+    commit('SET_REPORT_LIST', response.reports)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_REPORT_LIST_LOADING', false)
+  }
+}
+
 export default {
   initAcsDashboard,
   initLocationsTable,
@@ -213,5 +263,8 @@ export default {
   getSavedStatus,
   setSavedMachineStatus,
   getMachines,
-  getMachineTags
+  getMachineTags,
+  generateMachinesReport,
+  getReportsList,
+  deleteReport
 }

@@ -6,6 +6,10 @@ const state = {
   machines: [],
   reportMachines: [],
   reportMachineTags: [],
+  generateCompleted: false,
+  reportName: '',
+  reportsListLoading: false,
+  reportsList: [],
   selectedId: 0,
 
   selectedCompany: null,

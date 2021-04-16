@@ -87,5 +87,17 @@ export default {
   },
   SET_REPORT_MACHINE_TAGS(state, data) {
     state.reportMachineTags = data
+  },
+  REPORT_GENERATE_COMPLETED(state, status) {
+    state.generateCompleted = status
+  },
+  SET_REPORT_NAME(state, data) {
+    state.reportName = data
+  },
+  SET_REPORT_LIST_LOADING(state, status) {
+    state.reportsListLoading = status
+  },
+  SET_REPORT_LIST(state, data) {
+    state.reportsList = data
   }
 }

@@ -42,5 +42,14 @@ export default {
   },
   getMachineTags(data) {
     return api.$post('/analytics/get-machine-tags', data)
+  },
+  generateMachinesReport(data) {
+    return api.$post('/machines/generate-machines-report', data)
+  },
+  getMachinesReportList() {
+    return api.$get('/machines/get-machines-report')
+  },
+  deleteMachinesReport(id) {
+    return api.$delete(`/machines/report/${id}`)
   }
 }

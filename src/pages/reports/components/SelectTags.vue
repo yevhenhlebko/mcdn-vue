@@ -18,11 +18,12 @@
           </v-col>
           <v-col cols="8">
             <v-select
-              v-model="selectedTags"
+              v-model="selectedTags[id]"
               chips
               dense
               multiple
               small-chips
+              required
               :items="getMachineTags(id)"
               label="Choose tags for this machine"
               item-text="name"
@@ -35,8 +36,8 @@
       </v-card-text>
       <v-divider></v-divider>
       <div class="mt-2 pb-3 text-right">
-        <v-btn color="grey lighten-2" depressed>Cancel</v-btn>
-        <v-btn class="ml-2" depressed color="primary" @click="handleNext">Next Step</v-btn>
+        <v-btn color="grey lighten-2" depressed @click="$emit('cancel')">Back</v-btn>
+        <v-btn class="ml-2" depressed color="primary" @click="$emit('setMachineTags', selectedTags)">Next Step</v-btn>
       </div>
     </v-card>
   </div>
@@ -49,11 +50,14 @@ export default {
     machineIds: {
       type: Array,
       default: () => []
+    },
+    selectedTags: {
+      type: Object,
+      default: () => {}
     }
   },
   data() {
     return {
-      selectedTags: []
     }
   },
   computed: {
@@ -74,11 +78,13 @@ export default {
     },
     getMachineTags(id) {
       const machineInfo = this.reportMachineTags.find((item) => item.machine_id === id)
+      const tags = machineInfo ? [...machineInfo.tags] : []
+      const importantTags = machineInfo ? [...machineInfo.tags].filter((t) => t.divided_by) : []
 
-      return machineInfo ? [...machineInfo.tags] : []
-    },
-    handleNext() {
-      console.log(this.selectedTags)
+      tags && tags.splice(importantTags.length, 0, { divider: true })
+      tags && tags.splice(importantTags.length + 1, 0, { header: 'Alarms' })
+
+      return tags
     }
   }
 }
