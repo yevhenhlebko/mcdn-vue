@@ -48,6 +48,7 @@
 
         <v-stepper-content step="3">
           <select-machines
+            ref="selectMachines"
             @setReportMachines="handleSetReportMachines"
             @cancel="handeCancel"
           >
@@ -56,7 +57,7 @@
 
         <v-stepper-content step="4">
           <select-tags
-            :machine-ids="machineIds"
+            :device-ids="deviceIds"
             :selected-tags="selectedTags"
             @setMachineTags="handleSetMachineTags"
             @cancel="handeCancel"
@@ -67,7 +68,6 @@
         <v-stepper-content step="5">
           <select-time-range
             :selected-tags="selectedTags"
-            :time-range="timeRange"
             @setSelectedTimeRange="handleSetTimeRange"
             @cancel="handeCancel"
           >
@@ -117,7 +117,7 @@ export default {
   data() {
     return {
       creatingReport: false,
-      machineIds: [],
+      deviceIds: [],
       locationId: 0,
       zoneId: 0,
       selectedTags: {},
@@ -132,7 +132,8 @@ export default {
       getMachineTags: 'machines/getMachineTags',
       generateMachinesReport: 'machines/generateMachinesReport',
       initZonesTable: 'machines/initZonesTable',
-      getMachines: 'machines/getMachines'
+      getMachines: 'machines/getMachines',
+      getReportsList: 'machines/getReportsList'
     }),
     handleSetLocation(locationId) {
       this.locationId = locationId
@@ -143,22 +144,26 @@ export default {
         console.log(error)
       }
     },
-    handleSetZone(zoneId) {
+    async handleSetZone(zoneId) {
       this.zoneId = zoneId
       this.stepNumber = 3
       try {
-        this.getMachines()
+        await this.getMachines({
+          location: this.locationId,
+          zone: this.zoneId
+        })
       } catch (error) {
         console.log(error)
       }
+      this.$refs.selectMachines.resetModel()
     },
     handleSetReportMachines(data) {
       this.selectedTags = {}
-      this.machineIds = data
+      this.deviceIds = data
       this.stepNumber = 4
       try {
         this.getMachineTags({
-          machineIds: data
+          deviceIds: data
         })
       } catch (error) {
         console.log(error)
@@ -172,13 +177,20 @@ export default {
       this.selectedTimeRange = data
       this.stepNumber = 6
     },
-    handleGenerateReport(data, title) {
+    async handleGenerateReport(data, title) {
       this.timeRange = data
-      this.generateMachinesReport({
-        machineTags: this.selectedTags,
-        timeRange: this.timeRange,
-        reportTitle: title
-      })
+      try {
+        await this.generateMachinesReport({
+          machineTags: this.selectedTags,
+          timeRange: this.timeRange,
+          reportTitle: title
+        })
+
+        this.getReportsList()
+      } catch (error) {
+        console.log(error)
+      }
+      
     },
     handeCancel() {
       this.stepNumber -= 1

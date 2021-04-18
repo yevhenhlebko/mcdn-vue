@@ -1,6 +1,6 @@
 <template>
   <div>
-    <report-time-range-chooser ref="timeRange" :time-range="timeRange"></report-time-range-chooser>
+    <report-time-range-chooser ref="timeRange"></report-time-range-chooser>
     <v-card>
       <v-card-title class="pb-0">Date and Time</v-card-title>
       <v-card-text class="mt-0">Select Date and Time for the report</v-card-text>
@@ -47,6 +47,8 @@ import { mapState, mapActions } from 'vuex'
 
 import ReportTimeRangeChooser from './ReportTimeRangeChooser'
 
+const dateTimeIsoString = new Date().toISOString().substr(0, 10)
+
 export default {
   components: {
     ReportTimeRangeChooser
@@ -55,15 +57,17 @@ export default {
     selectedTags: {
       type: Object,
       default: () => {}
-    },
-    timeRange: {
-      type: Object,
-      default: () => {}
     }
   },
   data() {
     return {
-      
+      timeRange: {
+        timeRangeOption: 'last24Hours',
+        dateFrom: dateTimeIsoString,
+        dateTo: dateTimeIsoString,
+        timeFrom: '00:00',
+        timeTo: '00:00'
+      }
     }
   },
   computed: {
@@ -73,18 +77,17 @@ export default {
   },
   methods: {
     getMachineName(id) {
-      const machine =  this.reportMachines.find((machine) => machine.id === Number(id))
+      const machine =  this.reportMachines.find((machine) => machine.device_id === id)
 
       return machine ? machine.name : ''
     },
     handleNext() {
-      console.log(this.$refs.timeRange)
       this.timeRange['timeRangeOption'] = this.$refs.timeRange.locTimeRangeOption
       this.timeRange['dateFrom'] = this.$refs.timeRange.locDateFrom
       this.timeRange['dateTo'] = this.$refs.timeRange.locDateTo
       this.timeRange['timeFrom'] = this.$refs.timeRange.locTimeFrom
       this.timeRange['timeTo'] = this.$refs.timeRange.locTimeTo
-      
+
       this.$emit('setSelectedTimeRange', this.timeRange)
     }
   }

@@ -170,12 +170,12 @@ const setSavedMachineStatus = ({ commit }, status) => {
   commit('SET_SAVED_MACHINES_STATUS', status)
 }
 
-const getMachines = async ({ commit }) => {
+const getMachines = async ({ commit }, payload) => {
   commit('SET_REPORT_LOADING', true)
   try {
-    const response = await machineAPI.getMachines()
+    const response = await machineAPI.getMachines(payload)
 
-    commit('SET_REPORT_MACHINES', response.machines)
+    commit('SET_REPORT_MACHINES', response.devices)
   } catch (error) {
     throw new Error(error)
   } finally {
@@ -206,7 +206,6 @@ const generateMachinesReport = async ({ commit, dispatch }, payload) => {
 
     commit('REPORT_GENERATE_COMPLETED', true)
     commit('SET_REPORT_NAME', response.filename)
-
   } catch (error) {
     throw new Error(error)
   } finally {
