@@ -11,16 +11,44 @@
           <h2 class="my-2">Target Devices</h2>
           <div class="">Select the target device template your rule will use. If you need to narrow the rule's scope, add filters.</div>
           <v-select
+            v-model="selectedLocation"
+            :items="locations"
+            item-text="name"
+            item-value="id"
+            label="Location"
+            :loading="isLocationLoading"
+            :disabled="isLocationLoading"
+            @change="handleLocationChange"
+          >
+          </v-select>
+          <v-select
+            v-model="selectedZone"
+            :items="zones"
+            item-text="name"
+            item-value="id"
+            label="Zone"
+            :loading="isZoneLoading"
+            :disabled="isZoneLoading || !selectedLocation"
+            @change="handleZoneChange"
+          >
+          </v-select>
+          <v-select
+            v-model="selectedProduct"
             :items="products"
+            item-text="name"
+            item-value="device_id"
             label="Product"
+            :loading="isProductLoading"
+            :disabled="isProductLoading || !selectedZone"
+            @change="handleProductChange"
           >
           </v-select>
         </div>
         <div>
           <h2 class="my-3">Conditions</h2>
-          <div class="">Conditions define when you rule is triggered. Aggregation is optional - use it to cluster your data and trigger rules based on a time window.</div>
+          <div class="">Conditions define when your rule is triggered. Aggregation is optional - use it to cluster your data and trigger rules based on a time window.</div>
           <br>
-          <v-form>
+          <v-form ref="conditionForm" v-model="conditionValid" :disabled="!selectedProduct || isLoadingMachineTags">
             <v-row
               v-for="(filter, i) in filters"
               :key="i"
@@ -32,8 +60,11 @@
               >
                 <v-select
                   v-model="filter.telemetry"
-                  :items="telemetries"
+                  :items="machineTags"
+                  item-text="name"
+                  item-value="id"
                   label="Select a telemetry"
+                  :rules="conditionRules"
                   required
                 >
                 </v-select>
@@ -48,6 +79,7 @@
                   :items="operators"
                   label="Select an operator"
                   required
+                  :rules="conditionRules"
                 >
                 </v-select>
               </v-col>
@@ -61,10 +93,13 @@
                   type="number"
                   label="Select or enter a value"
                   required
+                  :rules="conditionRules"
                 ></v-text-field>
               </v-col>
             </v-row>
           </v-form>
+          <br>
+          <br>
           <v-btn
             @click="addFilter"
           >
@@ -82,7 +117,7 @@
           <v-tabs-items v-model="tab">
             <v-tab-item value="tabs-sms">
               <v-form
-                ref="smsForm"
+                ref="sms"
                 v-model="smsValid"
                 lazy-validation
               >
@@ -99,12 +134,19 @@
                   :rules="phoneRules"
                   required
                 ></v-text-field>
+                <v-textarea
+                  v-model="smsForm.note"
+                  label="Note"
+                  required
+                  :rules="noteRules"
+                  placeholder="Add a note to include in the sms."
+                ></v-textarea>
               </v-form>
             </v-tab-item>
 
             <v-tab-item value="tabs-email">
               <v-form
-                ref="emailForm"
+                ref="email"
                 v-model="emailValid"
                 lazy-validation
               >
@@ -125,14 +167,20 @@
                   v-model="emailForm.note"
                   label="Note"
                   required
+                  :rules="noteRules"
                   placeholder="Add a note to include in the email."
                 ></v-textarea>
               </v-form>
             </v-tab-item>
           </v-tabs-items>
 
-          <v-btn color="primary mt-2">
-            Submit
+          <v-btn
+            color="primary mt-2"
+            :disabled="!selectedLocation || !selectedZone || !selectedProduct || !conditionValid"
+            :loading="isAddingThreshold"
+            @click="handleSubmit"
+          >
+            Add Threshold
           </v-btn>
         </div>
       </v-card-text>
@@ -149,8 +197,8 @@
 |
 | Add a new threshold
 */
+import { mapState, mapActions } from 'vuex'
 
-import products from './content/products'
 import telemetries from './content/telemetries'
 import operators from './content/operators'
 
@@ -167,39 +215,38 @@ export default {
   },
   data() {
     return {
-      products,
+      selectedLocation: 0,
+      selectedZone: 0,
+      selectedProduct: 0,
       telemetries,
       operators,
 
       switch1: true,
 
-      defaultFilter: {
-        telemetry: '',
-        operator: '',
-        value: ''
-      },
       filters: [
         {
           telemetry: '',
           operator: '',
-          value: ''
+          value: null
         }
       ],
 
       emailForm: {
-        name: '',
-        to: '',
-        note: ''
+        name: null,
+        to: null,
+        note: null
       },
       smsForm: {
-        name: '',
-        to: ''
+        name: null,
+        to: null,
+        note: null
       },
 
       tab: null,
 
-      emailValid: true,
-      smsValid: true,
+      emailValid: false,
+      smsValid: false,
+      conditionValid: true,
 
       nameRules: [
         (v) => !!v || 'Name is required'
@@ -211,12 +258,125 @@ export default {
       phoneRules: [
         (v) => !!v || 'Phone number is required',
         (v) => /^(?:\(\d{3}\)|\d{3}-)\d{3}-\d{4}$/.test(v) || 'Phone number must be valid'
+      ],
+      noteRules: [
+        (v) => !!v || 'Note is required'
+      ],
+      conditionRules: [
+        (v) => !!v || 'This field is required'
       ]
     }
   },
+  computed: {
+    ...mapState({
+      isLocationLoading: (state) => state.locations.tableLoading,
+      isZoneLoading: (state) => state.machines.loadingZonesTable,
+      isProductLoading: (state) => state.machines.isReportLoading,
+      isLoadingMachineTags: (state) => state.thresholds.isLoadingMachineTags,
+      locations: (state) => state.locations ? state.locations.data : [],
+      products: (state) => state.machines.reportMachines,
+      isAddingThreshold: (state) => state.thresholds.loading
+    }),
+    machineTags: {
+      get() {
+        return this.$store.state.thresholds.machineTags
+      },
+      set (value) {
+        this.$store.commit('thresholds/SET_MACHINE_TAGS', value)
+      }
+    },
+    zones: {
+      get() {
+        return this.$store.state.zones.data
+      },
+      set (value) {
+        this.$store.commit('zones/SET_DATA', value)
+      }
+    },
+    products: {
+      get() {
+        return this.$store.state.machines.reportMachines
+      },
+      set (value) {
+        this.$store.commit('machines/SET_REPORT_MACHINES',value)
+      }
+    }
+  },
+  async mounted() {
+    await this.getLocations()
+  },
   methods: {
+    ...mapActions({
+      getLocations: 'locations/getLocations',
+      initZonesTable: 'machines/initZonesTable',
+      getMachines: 'machines/getMachines',
+      getMachineTags: 'thresholds/getMachineTags',
+      addThreshold: 'thresholds/addThreshold'
+    }),
     addFilter() {
-      this.filters.push(this.defaultFilter)
+      if (this.filters.length < 3) {
+        this.filters.push({
+          telemetry: '',
+          operator: '',
+          value: null
+        })
+      }
+    },
+    handleLocationChange() {
+      this.selectedZone = false
+      this.selectedProduct = false
+      this.initZonesTable(this.selectedLocation)
+    },
+    handleZoneChange() {
+      this.selectedProduct = false
+      this.getMachines({
+        location: this.selectedLocation,
+        zone: this.selectedZone
+      })
+    },
+    handleProductChange() {
+      this.filters = [
+        {
+          telemetry: '',
+          operator: '',
+          value: null
+        }
+      ]
+      this.getMachineTags({
+        deviceIds: [this.selectedProduct]
+      })
+    },
+    resetFilters() {
+      this.filters = this.initFilter
+    },
+    async handleSubmit() {
+      if ((this.$refs.sms && this.$refs.sms.validate()) || (this.$refs.email && this.$refs.email.validate())) {
+        await this.addThreshold({
+          deviceId: this.selectedProduct,
+          conditions: this.filters,
+          smsForm: this.smsForm,
+          emailForm: this.emailForm
+        })
+
+        this.selectedLocation = ''
+        this.selectedZone = ''
+        this.selectedProduct = ''
+        this.filters = [{
+          telemetry: '',
+          operator: '',
+          value: null
+        }]
+        this.smsForm = {
+          name: null,
+          to: null,
+          note: null
+        }
+        this.emailForm = {
+          name: null,
+          to: null,
+          note: null
+        }
+      }
     }
   }
 }
