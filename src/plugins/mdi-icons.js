@@ -59,6 +59,8 @@ export {
   mdiEyeOff,
   mdiMagnify,
   mdiChevronUp,
+  mdiChevronDoubleUp,
+  mdiChevronDoubleDown,
   mdiChevronDown,
   mdiMenuDown,
   mdiCheckCircle,
@@ -67,5 +69,10 @@ export {
   mdiCog,
   mdiDatabaseRemove,
   mdiWifiOff,
-  mdiFileChartOutline
+  mdiFileChartOutline,
+  mdiCheckBold,
+  mdiPrinter,
+  mdiTrashCanOutline,
+  mdiStandardDefinition,
+  mdiContrast
 } from '@mdi/js'
