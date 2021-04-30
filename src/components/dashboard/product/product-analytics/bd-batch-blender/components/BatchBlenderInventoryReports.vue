@@ -6,18 +6,8 @@
       :disabled="loadingInventories"
     >
       <v-card-title>
-        Inventories Reports
-        <v-btn
-          v-if="inventory.inventory_material"
-          small
-          class="ml-auto"
-          :loading="togglingInventoryTrack"
-          :disabled="togglingInventoryTrack"
-          color="primary"
-          @click="startClicked()"
-        >
-          {{ inventory.inventory_material.in_progress ? 'Stop System Inventory' : 'Start System Inventory' }}
-        </v-btn>
+        Material Assignment
+        <v-spacer></v-spacer>
         <v-btn
           icon
           small
@@ -40,17 +30,8 @@
             >
               <v-card>
                 <div class="overline ml-2">{{ `Hopper ${i + 1}` }}</div>
-                <v-card-title class="text--primary">{{ inv }} {{ inventory.unit }}</v-card-title>
-                <v-list-item two-line>
-                  <v-list-item-content>
-                    <v-list-item-subtitle>
-                      {{ materialText(i) }}
-                    </v-list-item-subtitle>
-                    <v-list-item-subtitle>
-                      {{ locationText(i) }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
+                <v-card-text class="text--primary text-subtitle-1">{{ materialText(i) }}</v-card-text>
+                <v-card-text class="text--primary text-subtitle-1">{{ locationText(i) }}</v-card-text>
                 <v-card-actions>
                   <v-btn
                     small
@@ -160,7 +141,7 @@ export default {
     }),
     ...mapState('bdBlenderAnalytics', ['loadingInventories', 'togglingInventoryTrack', 'inventory', 'savingMaterial']),
     dialogText () {
-      return `Feeder ${this.editedIndex + 1}`
+      return `Hopper ${this.editedIndex + 1}`
     }
   },
   mounted() {
