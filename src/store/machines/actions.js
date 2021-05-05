@@ -238,7 +238,7 @@ const deleteReport = async ({ commit, dispatch }, payload) => {
     if (response.status) {
       dispatch('app/showSuccess', response.message, { root: true })
     } else {
-      dispatch('app/showError', response.message, { root: true })
+      this.$store.dispatch('app/showError', { message: 'Error: ', error: { message: response.message } }, { root: true })
     }
     
     commit('SET_REPORT_LIST', response.reports)
@@ -259,6 +259,19 @@ const getBlenderWeights = async ({ commit, dispatch }, payload) => {
     throw new Error(error)
   } finally {
     commit('SET_HOPPER_WEIGHTS_LOADING', false)
+  }
+}
+
+const getAlarmHistory = async ({ commit }, payload) => {
+  commit('SET_ALARM_HISTORY_LOADING', true)
+  try {
+    const response = await machineAPI.getAlarmHistory(payload)
+
+    commit('SET_ALARM_HISTORY', response.alarms)
+  } catch (error) {
+    throw new Error(error)
+  } finally {
+    commit('SET_ALARM_HISTORY_LOADING', false)
   }
 }
 
@@ -284,5 +297,6 @@ export default {
   getReportsList,
   deleteReport,
   getBlenderWeights,
-  updateHopperSetting
+  updateHopperSetting,
+  getAlarmHistory
 }

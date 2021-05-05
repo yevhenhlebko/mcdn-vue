@@ -31,9 +31,9 @@
           Device <i class="font-weight-bold">{{ $route.params.productId }}</i> is not connected.
         </v-alert>
         <div v-else>
-          <v-tabs v-if="deviceConfiguration.isTcuConnected" v-model="tabModel">
+          <v-tabs v-if="deviceConfiguration.isTcuConnected && deviceConfiguration.plcMachineId !== 11" v-model="tabModel">
             <v-tab>{{ deviceConfiguration.plcMachineName }}</v-tab>
-            <v-tab>{{ deviceConfiguration.tcuMachineName }}</v-tab>
+            <v-tab v-if="deviceConfiguration.plcMachineName !== deviceConfiguration.tcuMachineName">{{ deviceConfiguration.tcuMachineName }}</v-tab>
           </v-tabs>
 
           <br>
@@ -142,7 +142,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex'
 
 import commonApi from '../../components/dashboard/product/common/fetches/api'
-import AlarmsTable from '../../components/dashboard/product/common/alarms-table/ProductAlarmsTable'
+import AlarmsTable from '../../components/dashboard/product/common/alarms-table/ProductAlarms'
 
 // import AlarmTable from '../../components/dashboard/product/AlarmTable'
 import ProductParametersChart from '../../components/dashboard/product/ProductParametersChart'

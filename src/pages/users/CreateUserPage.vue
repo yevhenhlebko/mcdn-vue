@@ -246,7 +246,7 @@ export default {
   computed: {
     ...mapState({
       userRole: (state) => state.auth.user.role, // role of current loggedin user
-      isBtnLoading: (state) => state.users.button_loading,
+      isBtnLoading: (state) => state.users.buttonLoading,
       loadingCities: (state) => state.cities.loadingCities,
       cities: (state) => state.cities.data,
       locations: (state) => state.locations.data,
@@ -263,7 +263,7 @@ export default {
       return [
         {
           text: 'Users',
-          to: this.isAcsUser ? '/acs-admin/users/list' : '/users/list',
+          to: this.isAcsUser ? '/acs-admin/users' : '/users',
           exact: true
         },
         {
@@ -320,8 +320,8 @@ export default {
         }
       }
     },
-    zonesOfLocation(location_id) {
-      return this.zones.filter((zone) => zone.location_id === location_id)
+    zonesOfLocation(locationId) {
+      return this.zones.filter((zone) => zone.location_id === locationId)
     },
     onBack() {
       if (this.$refs.profileForm.validate()) {

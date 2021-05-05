@@ -18,7 +18,7 @@
             icon
             small
             class="ml-2"
-            @click="getActiveThresholds"
+            @click="getApproachingThresholds"
           >
             <v-icon>$mdi-refresh</v-icon>
           </v-btn>
@@ -55,8 +55,6 @@
 */
 import { mapActions, mapState } from 'vuex'
 
-import operators from './content/operators'
-
 export default {
   components: {
   },
@@ -72,7 +70,7 @@ export default {
         { text: 'Id', sortable: false, value: 'id' },
         { text: 'Device name', sortable: false, value: 'device_name' },
         { text: 'Condition', sortable: false, value: 'option' },
-        { text: 'Last Triggered at (EST)', value: 'last_triggered_at' }
+        { text: 'Last Triggered at (EST)', value: 'approaching_triggered_time' }
       ],
       searchQuery: '',
       selectedThresholds: []
@@ -80,28 +78,28 @@ export default {
   },
   computed: {
     ...mapState({
-      thresholds: (state) => state.thresholds.thresholds,
+      thresholds: (state) => state.thresholds.approachingThresholds,
       loading: (state) => state.thresholds.loading,
       isThresholdUpdating: (state) => state.thresholds.isThresholdUpdating
     })
   },
   mounted() {
-    this.getActiveThresholds()
+    this.getApproachingThresholds()
   },
   methods: {
     ...mapActions({
-      getActiveThresholds: 'thresholds/getActiveThresholds',
-      clearThresholds: 'thresholds/clearThresholds'
+      getApproachingThresholds: 'thresholds/getApproachingThresholds',
+      clearApproachingThresholds: 'thresholds/clearApproachingThresholds'
     }),
     async handleSubmit() {
       try {
-        await this.clearThresholds({
+        await this.clearApproachingThresholds({
           thresholds: this.selectedThresholds
         })
 
         this.selectedThresholds = []
 
-        this.getActiveThresholds()
+        this.getApproachingThresholds()
       } catch (error) {
         console.log(error)
       }

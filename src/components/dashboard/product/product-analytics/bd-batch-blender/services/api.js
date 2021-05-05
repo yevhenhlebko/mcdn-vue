@@ -12,6 +12,10 @@ export default {
     return api.post('/analytics/product-inventory', payload)
   },
 
+  toggleInventoryTracking(payload) {
+    return api.post('/analytics/blender/toggle-in-progress', payload)
+  },
+
   getStationConveyings(payload) {
     return api.post('/analytics/product-station-conveyings', payload)
   },
@@ -30,6 +34,10 @@ export default {
 
   getBlenderCapability(payload) {
     return api.post('/analytics/blender/capability', payload)
+  },
+
+  getLoadCells(payload) {
+    return api.post('/analytics/blender/load-cells', payload)
   },
 
   updateInventoryMaterial(payload) {
