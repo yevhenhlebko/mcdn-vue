@@ -1,5 +1,8 @@
 <template>
-  <v-card>
+  <v-card
+    :loading="alarmHistoryLoading"
+    :disabled="alarmHistoryLoading"
+  >
     <v-card-title color="primary">
       Alarms History
       <v-spacer></v-spacer>
@@ -26,17 +29,17 @@
           <v-icon color="primary" left>$mdi-clock</v-icon>
           <span v-text="header.text"></span>
         </template>
-        <template v-slot:header.resolved="{ header }">
+        <template v-slot:header.resolve="{ header }">
           <v-icon color="primary" left>$mdi-clock</v-icon>
           <span v-text="header.text"></span>
         </template>
 
         <!-- custom table row -->
         <template v-slot:item.activate="{ item }">
-          {{ getTimeFromTimestamp(item) }}
+          {{ getTimeFromTimestamp(item.activate) }}
         </template>
-        <template v-slot:item.resolved="{ item }">
-          {{ getTimeFromTimestamp(item) }}
+        <template v-slot:item.resolve="{ item }">
+          {{ getTimeFromTimestamp(item.resolve) }}
         </template>
       </v-data-table>
     </v-card-text>
@@ -90,7 +93,7 @@ export default {
       headers: [
         { text: 'Alarm', align: 'start', value: 'name', sortable: false },
         { text: 'Alarm activated at', align: 'center', value: 'activate' },
-        { text: 'Alarm resolved at', align: 'center', value: 'resolved' }
+        { text: 'Alarm resolved at', align: 'center', value: 'resolve' }
       ],
       showTimeRangeChooser: false,
       tableItems: [],
@@ -99,7 +102,9 @@ export default {
   },
   computed: {
     ...mapState({
-      alarmHistory: (state) => state.machines.alarmHistory
+      alarmHistory: (state) => state.machines.alarmHistory,
+      alarmHistoryLoading: (state) => state.machines.alarmHistoryLoading
+
     }),
     ...mapGetters('machines', ['timeRangeFromTo']),
     getTimeRange() {
@@ -109,14 +114,14 @@ export default {
           dates: [new Date().toISOString().substr(0, 10), new Date().toISOString().substr(0, 10)]
         }
 
-        const from = new Date(this.timeRangeFromTo(tR).from).toISOString()
-        const to =  new Date(this.timeRangeFromTo(tR).to).toISOString()
+        const from = new Date(this.timeRangeFromTo(tR).from)
+        const to = new Date(this.timeRangeFromTo(tR).to)
 
         const timeRange = {
-          dateFrom: from.substr(0, 10),
-          dateTo: to.substr(0, 10),
-          timeFrom: from.substr(11, 8),
-          timeTo: to.substr(11, 8)
+          dateFrom: from.toLocaleDateString(),
+          dateTo: to.toLocaleDateString(),
+          timeFrom: from.toLocaleTimeString(),
+          timeTo: to.toLocaleTimeString()
         }
 
         return timeRange
@@ -135,7 +140,7 @@ export default {
   mounted() {
     this.getAlarmHistory({
       machineId: this.machineId,
-      from: new Date().getTime() - 24 * 60 * 60,
+      from: new Date().getTime() - 24 * 60 * 60 * 1000,
       to: new Date().getTime()
     })
   },
@@ -144,9 +149,9 @@ export default {
       getAlarmHistory: 'machines/getAlarmHistory'
     }),
     getTimeFromTimestamp(timestamp) {
-      const date = new Date(timestamp)
+      const date = timestamp !== -1 ? new Date(timestamp) : ''
 
-      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
+      return date !== '' ? `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` : ''
     },
     onTimeRangeChanged(newTimeRange) {
       this.selectedTimeRange = newTimeRange
@@ -165,6 +170,8 @@ export default {
           from,
           to
         })
+
+        this.showTimeRangeChooser = false
       }
     }
   }
