@@ -263,5 +263,16 @@ export default {
   */
   toggleActiveDevices() {
     return api.post('devices/toggle-active-devices', {})
+  },
+
+  /**
+   * Get data for the downtime graph
+   * 
+   * @example
+   * 
+   *    getDowntimeGraphData()
+   */
+  getDowntimeGraphData(data) {
+    return api.post('devices/get-downtime-graph-data', data)
   }
 }

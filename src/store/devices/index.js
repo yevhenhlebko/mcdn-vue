@@ -382,6 +382,18 @@ const module = {
       } finally {
         commit('SET_LOADING_ACTIVE_DEVICES', false)
       }
+    },
+
+    async getDowntimeGraphData({ commit }, data) {
+      commit('SET_LOADING_DOWNTIME_GRAPH', true)
+
+      try {
+        await deviceAPI.getDowntimeGraphData(data)
+      } catch (error) {
+        console.log(error)
+      } finally {
+        commit('SET_LOADING_DOWNTIME_GRAPH', false)
+      }
     }
   },
 

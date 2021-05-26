@@ -1,62 +1,15 @@
 <template>
   <v-row class="flex-grow-0" dense>
-    <v-col md="6" sm="12">
+    <v-col md="12" sm="12">
       <v-row dense class="my-0">
         <v-col
           xs="12"
-          sm="6"
-          class="pt-0"
-        >
-          <track-card
-            label="First Pass Yield"
-            :color="$vuetify.theme.themes.light.primary"
-            value="87%"
-            :percentage="1.7"
-            percentage-label="vs last week"
-            :series="ordersSeries"
-          ></track-card>
-        </v-col>
-        <v-col
-          xs="12"
-          sm="6"
+          sm="12"
           class="pt-0"
         >
           <downtime-card></downtime-card>
         </v-col>
-        <v-col
-          xs="12"
-          sm="6"
-          class="pb-0"
-        >
-          <track-card
-            label="Avg First Pass Yield"
-            :color="$vuetify.theme.themes.light.primary"
-            value="84%"
-            :percentage="4.3"
-            percentage-label="vs last week"
-            :series="customersSeries"
-          >
-          </track-card>
-        </v-col>
-        <v-col
-          xs="12"
-          sm="6"
-          class="pb-0"
-        >
-          <oee-card></oee-card>
-        </v-col>
       </v-row>
-    </v-col>
-    <v-col md="6" sm="12">
-      <div class="d-flex flex-column flex-grow-1" style="height: 100%">
-        <sales-card
-          :value="1.832"
-          :percentage="3.2"
-          :loading="isLoading1"
-          percentage-label="vs last week"
-          action-label="View Report"
-        ></sales-card>
-      </div>
     </v-col>
   </v-row>
 </template>
@@ -80,10 +33,7 @@ import TrackCard from '../../components/dashboard/TrackCard'
 
 export default {
   components: {
-    TrackCard,
-    SalesCard,
-    DowntimeCard,
-    OeeCard
+    DowntimeCard
   },
   data() {
     return {

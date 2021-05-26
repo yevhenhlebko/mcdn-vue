@@ -31,100 +31,90 @@
         </v-list>
       </v-menu>
     </v-card-title>
-    <div class="d-flex align-center justify-center mt-n2">
-      <div v-if="showChart" style="width: 400px">
-        <apexchart
-          type="donut"
-          min-height="110"
-          :options="chartOptions2"
-          :series="series2"
-        ></apexchart>
-      </div>
-    </div>
-    <div>
-      <v-card-actions class="mt-n4">
-        <v-spacer></v-spacer>
-        <v-btn
-          text
-          color="primary"
-        >
-          View Report
-          <v-icon right>$mdi-chart-bar</v-icon>
-        </v-btn>
-      </v-card-actions>
-    </div>
+    <v-card-text>
+      <apexchart
+        :options="chartOptions2"
+        :series="series2"
+      ></apexchart>
+    </v-card-text>
   </v-card>
 </template>
 
 <script>
+import { mapActions, mapState } from 'vuex'
+
 export default {
   data() {
     return {
       showChart: true,
-      series2: [44, 87, 12],
+      series2: [{
+        name: 'PRODUCT A',
+        data: [44, 55, 41, 67, 22, 43]
+      }, {
+        name: 'PRODUCT B',
+        data: [13, 23, 20, 8, 13, 27]
+      }, {
+        name: 'PRODUCT C',
+        data: [11, 17, 15, 15, 21, 14]
+      }, {
+        name: 'PRODUCT D',
+        data: [21, 7, 25, 13, 22, 8]
+      }],
       chartOptions2: {
         chart: {
-          type: 'donut',
-          animations: {
-            speed: 400
-          },
-          background: 'transparent'
-        },
-        stroke: {
-          show: true,
-          colors: '#fff',
-          width: 1,
-          dashArray: 0
-        },
-        plotOptions: {
-          pie: {
-            expandOnClick: false,
-            donut: {
-              size: '74%'
-            }
-          }
-        },
-        theme: {
-          mode: 'light'
-        },
-        labels: ['Unplanned', 'Planned', 'Idle'],
-        dataLabels: {
-          enabled: false
-        },
-        colors: ['#d6d93d', this.$vuetify.theme.themes.light.primary, '#999'],
-        fill: {
-          colors: ['#d6d93d', this.$vuetify.theme.themes.light.primary, '#999']
-        },
-        xaxis: {
-          labels: {
+          type: 'bar',
+          height: '100%',
+          stacked: true,
+          toolbar: {
             show: false
           },
-          axisBorder: {
-            show: false
+          zoom: {
+            enabled: true
           }
-        },
-        legend: {
-          fontSize: '13px',
-          fontFamily: 'Museo Sans 500',
-          fontWeight: 700
         },
         responsive: [{
           breakpoint: 480,
           options: {
-            chart: {
-              width: 200
-            },
             legend: {
-              offsetY: 0,
-              position: 'bottom'
+              position: 'bottom',
+              offsetX: -10,
+              offsetY: 0
             }
           }
-        }]
+        }],
+        plotOptions: {
+          bar: {
+            borderRadius: 0,
+            columnWidth: '30%',
+            horizontal: false
+          }
+        },
+        xaxis: {
+          type: 'datetime',
+          categories: ['01/01/2011 GMT', '01/02/2011 GMT', '01/03/2011 GMT', '01/04/2011 GMT',
+            '01/05/2011 GMT', '01/06/2011 GMT'
+          ]
+        },
+        legend: {
+          position: 'bottom',
+          offsetY: 10
+        },
+        fill: {
+          opacity: 1
+        }
       },
       viewOptions: [
         'Daily', 'Weekly', 'Monthly'
       ]
     }
+  },
+  mounted() {
+
+  },
+  methods: {
+    ...mapActions({
+      getDowntimeGraphData: 'devices/getDowntimeGraphData'
+    })
   }
 }
 </script>
