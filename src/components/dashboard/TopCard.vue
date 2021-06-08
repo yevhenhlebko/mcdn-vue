@@ -11,6 +11,12 @@
         </v-col>
       </v-row>
     </v-col>
+    <v-col md="6" sm="6">
+      <downtime-by-type-card></downtime-by-type-card>
+    </v-col>
+    <v-col md="6" sm="6">
+      <downtime-by-reason-card></downtime-by-reason-card>
+    </v-col>
   </v-row>
 </template>
 
@@ -28,12 +34,16 @@ import { mapState } from 'vuex'
 
 import SalesCard from '../../components/dashboard/SalesCard'
 import DowntimeCard from '../../components/dashboard/DowntimeCard'
+import DowntimeByTypeCard from '../../components/dashboard/DowntimeByTypeCard'
+import DowntimeByReasonCard from '../../components/dashboard/DowntimeByReasonCard'
 import OeeCard from '../../components/dashboard/OeeCard'
 import TrackCard from '../../components/dashboard/TrackCard'
 
 export default {
   components: {
-    DowntimeCard
+    DowntimeCard,
+    DowntimeByTypeCard,
+    DowntimeByReasonCard
   },
   data() {
     return {

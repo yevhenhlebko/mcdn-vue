@@ -274,5 +274,49 @@ export default {
    */
   getDowntimeGraphData(data) {
     return api.post('devices/get-downtime-graph-data', data)
+  },
+  
+  /**
+   * Get data for the downtime by type graph
+   * 
+   * @example
+   * 
+   *    getDowntimeByTypeSeries()
+   */
+  getDowntimeByTypeGraphSeries(data) {
+    return api.post('devices/get-downtime-by-type-graph-data', data)
+  },
+
+  /**
+   * Get data for the downtime by reason graph
+   * 
+   * @example
+   * 
+   *    getDowntimeByReasonGraphSeries()
+   */
+  getDowntimeByReasonGraphSeries(data) {
+    return api.post('devices/get-downtime-by-reason-graph-data', data)
+  },
+
+  /**
+   * Get data for the downtime table
+   * 
+   * @example
+   * 
+   *    getDowntimeTableData()
+   */
+  getDowntimeTableData() {
+    return api.get('devices/get-downtime-table-data')
+  },
+
+  /**
+   * Update downtime
+   * 
+   * @example
+   * 
+   *    updateDowntime()
+   */
+  updateDowntime(data) {
+    return api.put(`devices/update-downtime/${data.id}`, data)
   }
 }
