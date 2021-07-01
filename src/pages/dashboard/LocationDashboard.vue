@@ -61,7 +61,8 @@ export default {
 
       companies: (state) => state.companies.companies,
       selectedCompanyName: (state) => state.machines.selectedCompany ? state.machines.selectedCompany.name : '',
-      selectedCompany: (state) => state.machines.selectedCompany
+      selectedCompany: (state) => state.machines.selectedCompany,
+      userCompanyName: (state) => state.auth.user.companyName
     }),
     ...mapGetters({
       locationName: 'locations/locationName',
@@ -73,7 +74,7 @@ export default {
     breadcrumbItems() {
       return  [
         {
-          text: 'Dashboard',
+          text: this.userCompanyName,
           disabled: false,
           exact: true,
           to: '/dashboard/analytics'
@@ -88,9 +89,6 @@ export default {
       return [
         {
           text: this.selectedCompanyName,
-          disabled: true
-        }, {
-          text: 'Dashboard',
           disabled: false,
           exact: true,
           to: '/acs-machines'
@@ -106,28 +104,32 @@ export default {
       await this.initAcsDashboard()
     this.getLocations()
     this.initZonesTable(this.$route.params.location)
+
+    const now = new Date().getTime()
+    const nowMinus24Hours = now - 60 * 60 * 24 * 1000
+
     this.getDowntimeGraphData({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: this.$route.params.location,
       zone_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
 
     this.getDowntimeByTypeGraphSeries({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: this.$route.params.location,
       zone_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
 
     this.getDowntimeByReasonGraphSeries({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: this.$route.params.location,
       zone_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
   },
   methods: {
@@ -146,7 +148,7 @@ export default {
       this.$router.push({
         name: 'acs-machines'
       })
-      
+
     }
   }
 }

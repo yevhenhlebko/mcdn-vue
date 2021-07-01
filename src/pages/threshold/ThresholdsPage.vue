@@ -14,14 +14,6 @@
           <div>{{ item.updated_at.split('T')[0] }}</div>
         </template>
 
-        <template v-slot:item.companyMail="{ item }">
-          {{ item.email }}
-        </template>
-
-        <template v-slot:item.sms="{ item }">
-          {{ item.sms }}
-        </template>
-
         <template v-slot:item.status="{ item }">
           <div class="font-weight-bold d-flex align-center text-no-wrap">
             <div class="warning--text">
@@ -33,6 +25,10 @@
               ></v-switch>
             </div>
           </div>
+        </template>
+
+        <template v-slot:item.is_running="{ item }">
+          {{ getMachinesStatus(item.is_running) }}
         </template>
 
         <template v-slot:item.action="{ item }">
@@ -80,7 +76,7 @@
             <v-text-field
               v-model="editedItem.tag_name"
               :items="editedItem.tag_name"
-              label="Telemetry"
+              label="Parameter"
               outlined
               readonly
               dense
@@ -98,8 +94,6 @@
               v-model="editedItem.value"
               type="number"
               label="Select or enter a value"
-              required
-              :rules="conditionRules"
               outlined
               dense
             >
@@ -112,6 +106,16 @@
               dense
             >
             </v-text-field>
+            <v-select
+              v-model="editedItem.is_running"
+              :items="runningStatus"
+              item-text="name"
+              item-value="value"
+              label="Select a parameter"
+              outlined
+              dense
+            >
+            </v-select>
           </v-form>
         </v-card-text>
         <v-card-text>
@@ -145,6 +149,7 @@
 import { mapActions, mapState } from 'vuex'
 
 import operators from './content/operators'
+import * as Sentry from '@sentry/vue'
 
 export default {
   components: {
@@ -158,10 +163,13 @@ export default {
   data () {
     return {
       headers: [
-        { text: 'Condition', sortable: false, value: 'condition' },
+        { text: 'Condition', sortable: false, value: 'tag_name' },
+        { text: 'Operator', value: 'operator' },
+        { text: 'Value', value: 'value' },
         { text: 'Approaching Value', value: 'approaching' },
         { text: 'Date', value: 'date' },
         { text: 'Enabled', value: 'status' },
+        { text: 'Parameter', align: 'center', value: 'is_running' },
         { text: 'Actions', sortable: false, align: 'center', value: 'action' }
       ],
       isDeleteThreshold: false,
@@ -172,9 +180,13 @@ export default {
       isEditFormValid: false,
       operators,
       tab: null,
-      conditionRules: [
-        (v) => !!v || 'This field is required'
-      ]
+      runningStatus: [{
+        name: 'True',
+        value: true
+      }, {
+        name: 'False',
+        value: false
+      }]
     }
   },
   computed: {
@@ -200,7 +212,7 @@ export default {
       try {
         await this.changeThresholdStatus(id)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
       this.getThresholds()
     },
@@ -208,12 +220,15 @@ export default {
       this.selectedThresholdId = id
       this.isDeleteThreshold = true
     },
+    getMachinesStatus(status) {
+      return status ? 'True' : 'False'
+    },
     async confirmDelete() {
       try {
         await this.deleteThreshold(this.selectedThresholdId)
         this.isDeleteThreshold = false
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
       this.getThresholds()
     },
@@ -233,7 +248,7 @@ export default {
 
         this.getThresholds()
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     }
   }

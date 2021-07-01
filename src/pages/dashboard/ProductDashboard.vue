@@ -37,7 +37,7 @@
           </v-tabs>
 
           <br>
-          
+
           <v-tabs-items v-model="tabModel" class="overflow-visible">
             <v-tab-item>
               <v-row class="flex-grow-0" dense>
@@ -49,6 +49,22 @@
                     :graphs="deviceConfiguration.plcAnalyticsGraphs"
                   >
                   </product-analytics>
+                </v-col>
+                <v-col cols="12">
+                  <v-card-title>
+                    Downtime Data
+                  </v-card-title>
+                  <v-row class="flex-grow-0" dense>
+                    <v-col md="4" sm="12">
+                      <downtime-card></downtime-card>
+                    </v-col>
+                    <v-col md="4" sm="12">
+                      <downtime-by-type-card></downtime-by-type-card>
+                    </v-col>
+                    <v-col md="4" sm="12">
+                      <downtime-by-reason-card></downtime-by-reason-card>
+                    </v-col>
+                  </v-row>
                 </v-col>
                 <v-col cols="12">
                   <alarms-table
@@ -80,6 +96,22 @@
                     :graphs="deviceConfiguration.tcuAnalyticsGraphs"
                   >
                   </product-analytics>
+                </v-col>
+                <v-col cols="12">
+                  <v-card-title>
+                    Downtime Data
+                  </v-card-title>
+                  <v-row class="flex-grow-0" dense>
+                    <v-col md="4" sm="12">
+                      <downtime-card></downtime-card>
+                    </v-col>
+                    <v-col md="4" sm="12">
+                      <downtime-by-type-card></downtime-by-type-card>
+                    </v-col>
+                    <v-col md="4" sm="12">
+                      <downtime-by-reason-card></downtime-by-reason-card>
+                    </v-col>
+                  </v-row>
                 </v-col>
                 <v-col cols="12">
                   <alarms-table
@@ -150,6 +182,9 @@ import ProductAnalytics from '../../components/dashboard/product/ProductAnalytic
 import NotesTimeline from '../../components/dashboard/NotesTimeline'
 import NoteForm from '../../components/dashboard/NoteForm'
 import CompanyMenu from '../../components/dashboard/CompanyMenu'
+import DowntimeCard from '../../components/dashboard/DowntimeCard'
+import DowntimeByTypeCard from '../../components/dashboard/DowntimeByTypeCardForProduct'
+import DowntimeByReasonCard from '../../components/dashboard/DowntimeByReasonCard'
 
 export default {
   components: {
@@ -158,16 +193,21 @@ export default {
     ProductAnalytics,
     NotesTimeline,
     NoteForm,
-    AlarmsTable
+    AlarmsTable,
+    DowntimeCard,
+    DowntimeByTypeCard,
+    DowntimeByReasonCard
   },
-  props: {
+  props:{
+
   },
   data() {
     return {
       tabModel: 0,
       selectedParameters: [],
       selectedParametersForTcu: [],
-      getProductAlarms: commonApi.getProductAlarms
+      getProductAlarms: commonApi.getProductAlarms,
+      options: {}
     }
   },
   computed: {
@@ -175,7 +215,10 @@ export default {
     ...mapState({
       notes: (state) => state.notes.data,
       companies: (state) => state.companies.companies,
-      selectedCompanyName: (state) => state.machines.selectedCompany ? state.machines.selectedCompany.name : ''
+      selectedCompanyName: (state) => state.machines.selectedCompany ? state.machines.selectedCompany.name : '',
+      userCompanyName: (state) => state.auth.user.companyName,
+      downtimeTableData: (state) => state.devices.downtimeTableData,
+      selectedCompany: (state) => state.machines.selectedCompany
     }),
     ...mapState('alarms', ['loadingAlarmsTable', 'alarmTypes', 'alarms']),
 
@@ -187,7 +230,7 @@ export default {
     breadcrumbItems() {
       return [
         {
-          text: 'Dashboard',
+          text: this.userCompanyName,
           disabled: false,
           exact: true,
           to: '/dashboard/analytics'
@@ -211,9 +254,6 @@ export default {
       return [
         {
           text: this.selectedCompanyName,
-          disabled: true
-        }, {
-          text: 'Dashboard',
           disabled: false,
           exact: true,
           to: '/acs-machines'
@@ -232,6 +272,14 @@ export default {
           disabled: true
         }
       ]
+    },
+    routeParams() {
+      return {
+        location:this.$route.params.location,
+        zone:this.$route.params.zone,
+        machine_id:this.$route.params.configurationId,
+        serial_number:this.$route.params.productId
+      }
     }
   },
 
@@ -243,6 +291,35 @@ export default {
 
     await this.getDeviceConfiguration(this.$route.params.productId)
 
+    const now = new Date().getTime()
+    const nowMinus24Hours = now - 60 * 60 * 24 * 1000
+
+    this.getDowntimeGraphData({
+      company_id: this.selectedCompany ? this.selectedCompany.id : 0,
+      location_id: 0,
+      machine_id: this.$route.params.configurationId,
+      serial_number: this.$route.params.productId,
+      from: nowMinus24Hours,
+      to: now
+    })
+
+    this.getDowntimeByTypeGraphSeries({
+      company_id: this.selectedCompany ? this.selectedCompany.id : 0,
+      location_id: 0,
+      machine_id: this.$route.params.configurationId,
+      serial_number: this.$route.params.productId,
+      from: nowMinus24Hours,
+      to: now
+    })
+
+    this.getDowntimeByReasonGraphSeries({
+      company_id: this.selectedCompany ? this.selectedCompany.id : 0,
+      location_id: 0,
+      machine_id: this.$route.params.configurationId,
+      serial_number: this.$route.params.productId,
+      from: nowMinus24Hours,
+      to: now
+    })
     if (!this.error) {
       this.getNotes(this.$route.params.productId)
     }
@@ -254,7 +331,10 @@ export default {
       initAcsDashboard: 'machines/initAcsDashboard',
       getLocations: 'locations/getLocations',
       getZones: 'zones/getZones',
-      getNotes: 'notes/getNotes'
+      getNotes: 'notes/getNotes',
+      getDowntimeGraphData: 'devices/getDowntimeGraphData',
+      getDowntimeByTypeGraphSeries: 'devices/getDowntimeByTypeGraphSeries',
+      getDowntimeByReasonGraphSeries: 'devices/getDowntimeByReasonGraphSeries'
     })
   }
 }

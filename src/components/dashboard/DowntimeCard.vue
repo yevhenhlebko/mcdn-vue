@@ -16,14 +16,16 @@
         >
           <v-icon>$mdi-filter</v-icon>
         </v-btn>
-        <v-btn
-          v-if="canViewEquipmentAvailability || isNotOverrallOption"
-          class="ml-1"
-          color="primary"
-          @click="showDowntimeChart = false"
-        >
-          Equipment Availability
-        </v-btn>
+        <template v-if="$route.name==='dashboard-product'">
+          <v-btn
+            v-if="canViewEquipmentAvailability || isNotOverrallOption"
+            class="ml-1"
+            color="primary"
+            @click="showDowntimeChart = false"
+          >
+            Equipment Availability
+          </v-btn>
+        </template>
       </v-card-title>
       <v-card-text>
         <apexchart
@@ -33,38 +35,40 @@
           :options="chartOptions1"
         ></apexchart>
       </v-card-text>
-      <time-range-chooser
+      <time-range-chooser4
         :dlg="showTimeRangeChooser"
         :time-range="selectedTimeRange"
         @close="showTimeRangeChooser = false"
         @submit="onTimeRangeChanged"
       >
-      </time-range-chooser>
+      </time-range-chooser4>
     </div>
     <div v-else>
-      <v-card-title>
-        Equipment Availability
-        <v-spacer></v-spacer>
-        <v-btn
-          class="ml-1"
-          color="primary"
-          @click="showDowntimeChart = true"
-        >
-          Downtime
-        </v-btn>
-        <v-btn
-          v-if="canAddAvailabilityPlanTime"
-          class="ml-1"
-          color="primary"
-          @click="showPlanTimeForm = true"
-        >
-          Set Plan Time
-        </v-btn>
-      </v-card-title>
+      <template v-if="$route.name==='dashboard-product'">
+        <v-card-title>
+          Equipment Availability
+          <v-spacer></v-spacer>
+          <v-btn
+            class="ml-1"
+            color="primary"
+            @click="showDowntimeChart = true"
+          >
+            Downtime
+          </v-btn>
+          <v-btn
+            v-if="canAddAvailabilityPlanTime"
+            class="ml-1"
+            color="primary"
+            @click="showPlanTimeForm = true"
+          >
+            Set Plan Time
+          </v-btn>
+        </v-card-title>
+      </template>
       <v-card-text>
         <apexchart
           key="availability-chart"
-          height="400"
+          height="420"
           :series="chartOptions2.series"
           :options="chartOptions2"
         ></apexchart>
@@ -80,29 +84,29 @@
 
 <script>
 import { mapActions, mapState, mapGetters } from 'vuex'
-import TimeRangeChooser from './TimeRangeChooser4'
+import TimeRangeChooser4 from './TimeRangeChooser4'
 import AvailabilityPlanTimeForm from './AvailabilityPlanTimeForm'
 
-const dateTimeIsoString = new Date().toISOString().substr(0, 10)
+const TODAY = new Date().toISOString().substr(0, 10) // YYYY-MM-DD
 
 const seriesColors = [{
   name: 'No Demand',
-  color: '#a4bcbb'
+  color: '#eeeeef'
 }, {
   name: 'Preventative Maintenance',
-  color: '#508FF0'
+  color: '#0f2d52'
 }, {
   name: 'Machine Failure',
-  color: '#06d6a0'
+  color: '#29b1b8'
 }, {
   name: 'Power Outage',
-  color: '#505554'
+  color: '#5a5d61'
 }, {
   name: 'Other',
-  color: '#ffd166'
+  color: '#c8c62e'
 }, {
   name: 'Change Over',
-  color: '#ea344e'
+  color: '#623266'
 }, {
   name: 'Average Downtime',
   color: '#ba7d55'
@@ -110,7 +114,7 @@ const seriesColors = [{
 
 export default {
   components: {
-    TimeRangeChooser,
+    TimeRangeChooser4,
     AvailabilityPlanTimeForm
   },
   data() {
@@ -119,8 +123,8 @@ export default {
       showPlanTimeForm: false,
       selectedTimeRange: {
         timeRangeOption: 'last24Hours',
-        dateFrom: dateTimeIsoString,
-        dateTo: dateTimeIsoString,
+        dateFrom: TODAY,
+        dateTo: TODAY,
         timeFrom: '00:00',
         timeTo: '00:00'
       },
@@ -170,7 +174,8 @@ export default {
           bar: {
             borderRadius: 0,
             columnWidth: '70%',
-            horizontal: false
+            horizontal: false,
+            endingShape: 'rounded'
           }
         },
         dataLabels: {
@@ -181,10 +186,18 @@ export default {
         },
         xaxis: {
           type: 'date',
-          categories: this.downtimeGraphDate
+          categories: this.downtimeGraphDate,
+          labels: {
+            formatter: (value) => {
+              return value ? value.slice(6, 10) : ''
+            }
+          }
         },
         legend: {
-          position: 'bottom'
+          position: 'bottom',
+          markers: {
+            radius: 12
+          }
         },
         colors: this.getSeriesColors,
         fill: {
@@ -216,10 +229,16 @@ export default {
         },
         xaxis: {
           type: 'date',
-          categories: this.downtimeGraphDate
+          categories: this.downtimeGraphDate,
+          labels: {
+            formatter: (value) => {
+              return value ? value.slice(6, 10) : ''
+            }
+          }
         },
         yaxis: {
           forceNiceScale: true,
+          min:0,
           labels: {
             offsetX: 10,
             formatter: (value) => {
@@ -230,7 +249,7 @@ export default {
             text: 'Availability (%)'
           }
         },
-    
+
         dataLabels: {
           style: {
             fontSize: '10px',
@@ -244,19 +263,20 @@ export default {
     },
     getTimeRange() {
       if (this.selectedTimeRange && this.selectedTimeRange.timeRangeOption !== 'custom') {
+        const TODAY = new Date().toISOString().substr(0, 10) // YYYY-MM-DD
         const tR = {
           timeRangeOption: this.selectedTimeRange.timeRangeOption,
-          dates: [new Date().toISOString().substr(0, 10), new Date().toISOString().substr(0, 10)]
+          dates: [TODAY, TODAY]
         }
 
         const from = new Date(this.timeRangeFromTo(tR).from)
         const to = new Date(this.timeRangeFromTo(tR).to)
 
         const timeRange = {
-          dateFrom: from.toLocaleDateString(),
-          dateTo: to.toLocaleDateString(),
-          timeFrom: from.toLocaleTimeString(),
-          timeTo: to.toLocaleTimeString()
+          dateFrom: from.toLocaleDateString('en-US'),
+          dateTo: to.toLocaleDateString('en-US'),
+          timeFrom: from.toLocaleTimeString('en-US'),
+          timeTo: to.toLocaleTimeString('en-US')
         }
 
         return timeRange
@@ -279,7 +299,7 @@ export default {
           return data.name === item.name
         })
 
-        _colors.push(seriesColor ? seriesColor.color : '#fff')
+        _colors.push(seriesColor ? seriesColor.color : '#f1f1cb')
 
         return _colors
       })

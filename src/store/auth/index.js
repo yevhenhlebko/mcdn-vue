@@ -1,6 +1,6 @@
-import Vue from 'vue'
 import router from '../../router'
 import authAPI from '../../services/api/auth'
+import * as Sentry from '@sentry/vue'
 
 const module = {
   namespaced: true,
@@ -11,7 +11,9 @@ const module = {
       role: null,
       email: null,
       username: null,
-      companyId: null
+      companyId: null,
+      companyName: null,
+      phone: null
     },
     profile: {
 
@@ -94,7 +96,7 @@ const module = {
             })
           }
         } catch (error) {
-          console.log(error)
+          Sentry.captureException(error)
         }
       } catch (error) {
         if (error.response.status === 401) {
@@ -102,8 +104,9 @@ const module = {
             'error': 'Email and password incorrect.'
           })
         }
+        Sentry.captureException(error)
       }
-        
+
       commit('BUTTON_CLEAR')
     },
 
@@ -135,7 +138,7 @@ const module = {
 
         commit('SET_AUTH_PROFILE', response.data.user)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -145,7 +148,7 @@ const module = {
       currentPassword, newPassword
     }) {
       commit('BUTTON_LOAD')
-      
+
       try {
         const response = await authAPI.updatePassword(currentPassword, newPassword)
 
@@ -162,11 +165,39 @@ const module = {
             'error': errors[0]
           })
         }
+        Sentry.captureException(error)
       }
-      
+
       commit('BUTTON_CLEAR')
     },
-    
+
+    async updateProfile({
+      commit, dispatch
+    }, data ) {
+      commit('BUTTON_LOAD')
+
+      try {
+        const response = await authAPI.updateProfile(data)
+
+        dispatch('app/showSuccess', response.data.message, { root: true })
+      } catch (error) {
+        if (error.response.status === 400) {
+          commit('SET_ERROR', {
+            'error': error.response.data.error
+          })
+        } else if (error.response.status === 422) {
+          const errors = Object.values(error.response.data.error).flat()
+
+          commit('SET_ERROR', {
+            'error': errors[0]
+          })
+        }
+        Sentry.captureException(error)
+      }
+
+      commit('BUTTON_CLEAR')
+    },
+
     async requestForgotPassword({
       commit
     }, email) {
@@ -180,8 +211,9 @@ const module = {
             'error': error.response.data
           })
         }
+        Sentry.captureException(error)
       }
-      
+
       commit('BUTTON_CLEAR')
     },
 
@@ -195,9 +227,9 @@ const module = {
 
         commit('SET_TIMEZONES', response.data.timezones)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
-      
+
       commit('SET_LOADING_TIME_ZONE', false)
     },
 
@@ -211,9 +243,9 @@ const module = {
 
         dispatch('app/showSuccess', response.data.message, { root: true })
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
-      
+
       commit('SET_UPDATING_TIME_ZONE', false)
     }
   },
@@ -246,6 +278,8 @@ const module = {
         state.user.username = user.name
         state.user.role = user.role
         state.user.companyId = user.company_id
+        state.user.companyName = user.companyName
+        state.user.phone = user.phoneNumber
       }
     },
     SET_LOGOUT_AUTH(state) {
@@ -267,7 +301,9 @@ const module = {
     SET_UPDATING_TIME_ZONE(state, loading) { state.updatingTimezone = loading },
 
     SET_TIMEZONES(state, timezones) { state.timeZoneNames = timezones},
-    SET_AUTH_PROFILE(state, user) { state.profile = user }
+    SET_AUTH_PROFILE(state, user) {
+      state.profile = user
+    }
   },
   getters: {
     roleName: (state) => (role_key) => {
@@ -275,6 +311,8 @@ const module = {
 
       return currentRole ? currentRole.name : ''
     },
+    isSuperUser: (state) => state.user.role === 'super_admin',
+    isAcsUser: (state) => ['acs_admin', 'acs_manager', 'acs_viewer'].includes(state.user.role),
     canCreateAcsUser: (state) => state.user.role === 'acs_admin',
     canCreateCompanies: (state) => ['acs_admin', 'acs_manager'].includes(state.user.role),
     canViewCompanies: (state) => ['acs_admin', 'acs_manager', 'acs_viewer'].includes(state.user.role),
@@ -283,7 +321,8 @@ const module = {
     canViewInventory: (state) => state.user.role === 'acs_admin',
     canGetMaterialsAndLocations: (state) => state.user.role === 'customer_manager',
     canAddAvailabilityPlanTime: (state) => state.user.role === 'customer_manager',
-    canViewEquipmentAvailability: (state) => ['customer_admin', 'customer_manager', 'customer_operator'].includes(state.user.role)
+    canViewEquipmentAvailability: (state) => ['customer_admin', 'customer_manager', 'customer_operator'].includes(state.user.role),
+    isUserHasPhone: (state) => state.user.phone !== null
   }
 }
 

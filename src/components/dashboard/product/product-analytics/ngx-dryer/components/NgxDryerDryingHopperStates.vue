@@ -6,36 +6,40 @@
   >
     <v-card-title>Drying Hopper States</v-card-title>
     <v-card-text>
-      <v-alert
-        v-for="(num, index) in 3"
+      <div
+        v-for="(num, index) in ngxHopperCount"
         :key="index"
-        :color="backgroundColor(dryingHoppers[`hopper${num}`])"
-        :style="`color: ${textColor(dryingHoppers[`hopper${num}`])}`"
       >
-        <v-row
-          v-if="dryingHoppers[`hopper${num}`]"
-          align="center"
-          no-gutters
+        <v-alert
+          :color="backgroundColor(dryingHoppers[`hopper${num}`])"
+          :style="`color: ${textColor(dryingHoppers[`hopper${num}`])}`"
         >
-          <v-col cols="7">
-            <span
-              class="font-weight-bold"
-            >Drying Hopper {{ num }}</span>
-          </v-col>
-          <v-col class="d-flex text-body-2">
-            <v-icon
-              small
-              left
-              :color="circleColor(dryingHoppers[`hopper${num}`])"
-            >$mdi-checkbox-blank-circle</v-icon>
-            {{ valueText(dryingHoppers[`hopper${num}`]) }}
-          </v-col>
-        </v-row>
-      </v-alert>
+          <v-row
+            align="center"
+            no-gutters
+          >
+            <v-col cols="7">
+              <span
+                class="font-weight-bold"
+              >Drying Hopper {{ num }}</span>
+            </v-col>
+            <v-col class="d-flex text-body-2">
+              <v-icon
+                small
+                left
+                :color="circleColor(dryingHoppers[`hopper${num}`])"
+              >$mdi-checkbox-blank-circle</v-icon>
+              {{ valueText(dryingHoppers[`hopper${num}`]) }}
+            </v-col>
+          </v-row>
+        </v-alert>
+      </div>
+
     </v-card-text>
   </v-card>
 </template>
 <script>
+import { mapState } from 'vuex'
 // value meaning hopper color
 // 0 DISABLED GREY
 // 1 ENABLED WHITE
@@ -56,7 +60,7 @@ const DRYING_HOPPER_STATES = {
     valueText: 'Enabled'
   },
   ONLINE: {
-    backgroundColor: 'acs-online lighten-4',  
+    backgroundColor: 'acs-online lighten-4',
     circleColor: 'acs-online',
     valueText: 'Online'
   },
@@ -87,6 +91,11 @@ export default {
       type: Object,
       default: () => {}
     }
+  },
+  computed: {
+    ...mapState('ngxDryer', [
+      'ngxHopperCount'
+    ])
   },
   methods: {
     getHopperByIndex(index) {
@@ -119,8 +128,7 @@ export default {
       return state ? state.circleColor : ''
     },
     textColor(value) {
-      if (value === 0) return '#9e9e9e'
-      else return '#193d66'
+      return (value === 0) ? '#6c706d' : '#193d66'
     },
     valueText(value) {
       const state = this.getHopperState(value)

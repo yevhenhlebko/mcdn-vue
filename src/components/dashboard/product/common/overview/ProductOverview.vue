@@ -29,17 +29,28 @@
             </v-tooltip>
           </v-list-item-avatar>
         </v-list-item>
-        
+
         <v-card-subtitle>
           <div v-if="overview.teltonikaDevice">{{ overview.teltonikaDevice.name }}</div>
           <div>{{ overview.machineName }}</div>
-          <v-chip :color="`${getColor(overview.status)} lighten-4`">
-            <v-list-item-avatar class="mr-1" :color="getColor(overview.status)">
-              <v-icon small>
-                {{ getIcon(overview.status) }}
-              </v-icon>
-            </v-list-item-avatar>
-            {{ getText(overview.status) }}
+          <v-chip color="grey lighten-4" dense>
+            <v-tooltip v-for="(status, index) in overview.status" :key="index" bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-avatar
+                  class="ml-0 mr-0"
+                  v-bind="attrs"
+                  :color="getColor(status)"
+                  v-on="on"
+                >
+                  <v-icon
+                    small
+                  >
+                    {{ getIcon(status) }}
+                  </v-icon>
+                </v-avatar>
+              </template>
+              <span>{{ getText(status) }}</span>
+            </v-tooltip>
           </v-chip>
         </v-card-subtitle>
         <v-img
@@ -126,10 +137,12 @@
 
 <script>
 import { mapActions, mapState } from 'vuex'
-import overviewStore from './store'
+import Store from './store'
+import dynamicStoreMixin from '../dynamicStoreMixin'
 
 export default {
   name: 'Overview',
+  mixins: [dynamicStoreMixin],
   props: {
     namespace: {
       type: String,
@@ -152,25 +165,45 @@ export default {
     return {
       requestDialog: false,
       deviceStatus: {
-        running: {
+        machineRunning: {
           color: 'green',
-          text: 'Running',
+          text: 'Machine Running',
           icon: '$mdi-check-circle-outline'
         },
         routerNotConnected: {
           color: 'yellow',
-          text: 'Router Not Connected',
+          text: 'Router No Communication',
           icon: '$mdi-wifi-off'
         },
-        shutOff: {
-          color: 'red',
-          text: 'Shut Off',
+        machineStopped: {
+          color: 'grey',
+          text: 'Machine Stopped',
           icon: '$mdi-block-helper'
         },
+        machineIdle: {
+          color: 'grey',
+          text: 'Machine Idle - No Demand',
+          icon: '$mdi-block-helper'
+        },
+        machineStoppedActiveAlarm: {
+          color: 'red',
+          text: 'Machine Stopped - Active Alarm',
+          icon: '$mdi-block-helper'
+        },
+        machineRunningAlert: {
+          color: 'yellow',
+          text: 'Machine Running - Alert',
+          icon: '$mdi-alert-outline'
+        },
         plcNotConnected: {
-          color: 'orange',
-          text: 'PLC Not Connected',
+          color: 'red',
+          text: 'PLC No Communication',
           icon: '$mdi-database-remove'
+        },
+        machineRunningThreshold: {
+          color: 'red',
+          text: 'Machine Running - Threshold Alert',
+          icon: '$mdi-alert-outline'
         }
       }
     }
@@ -179,25 +212,27 @@ export default {
     ...mapState({
       user: (state) => state.auth.user
     }),
+    Store() {
+      // dynamic vuex store generators for the mixin
+      return Store
+    },
+    state() {
+      return this.$store.state[this.namespace]
+    },
     isLoading() {
-      return this.$store.state[this.namespace]['isLoading']
+      return this.state['isLoading']
     },
     overview() {
-      return this.$store.state[this.namespace]['overview']
+      return this.state['overview']
     },
     machineImage() {
       return this.overview.machineId ? require(`@/assets/imgs/${this.overview.machineId}.png`) : ''
     },
     isSavedMachine() {
-      return this.$store.state[this.namespace]['isSavedMachine']
+      return this.state['isSavedMachine']
     },
     isSaveMachineLoading() {
-      return this.$store.state[this.namespace]['isSaveMachineLoading']
-    }
-  },
-  created() {
-    if (!this.isModuleCreated([this.namespace])) {
-      this.registerModule()
+      return this.state['isSaveMachineLoading']
     }
   },
   mounted() {
@@ -216,23 +251,6 @@ export default {
         return dispatch(this.namespace + '/saveMachine', payload)
       }
     }),
-    isModuleCreated(path) {
-      let m = this.$store._modules.root
-
-      return path.every((p) => {
-        m = m._children[p]
-
-        return m
-      })
-    },
-    registerModule() {
-      this.$store.registerModule(this.namespace, {
-        namespaced: true,
-        state: overviewStore.overviewState(),
-        actions: overviewStore.overviewActions(this.fetch),
-        mutations: overviewStore.overviewMutations()
-      })
-    },
     handleRequestService() {
       const sendEmail = process.env.VUE_APP_SERVICE_REQUEST_SEND_EMAIL
 

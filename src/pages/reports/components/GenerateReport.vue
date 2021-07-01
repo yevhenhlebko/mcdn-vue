@@ -27,7 +27,7 @@
             <div class="primary--text">{{ getMachineName(id) }}</div>
           </v-col>
           <v-col cols="8" class="d-flex flex-column">
-            <div class="pa-0 text-caption">Tags</div>
+            <div class="pa-0 text-caption">Parameters</div>
             <div class="primary--text">
               <v-chip
                 v-for="(tag, i) in selectedTags[id]"
@@ -112,9 +112,10 @@ export default {
     ...mapGetters('machines', ['timeRangeFromTo']),
     getTimeRange() {
       if (this.selectedTimeRange && this.selectedTimeRange.timeRangeOption !== 'custom') {
+        const TODAY = new Date().toISOString().substr(0, 10) // YYYY-MM-DD
         const tR = {
           timeRangeOption: this.selectedTimeRange.timeRangeOption,
-          dates: [new Date().toISOString().substr(0, 10), new Date().toISOString().substr(0, 10)]
+          dates: [TODAY, TODAY]
         }
 
         const from = new Date(this.timeRangeFromTo(tR).from).toISOString()
@@ -142,16 +143,12 @@ export default {
   },
   methods: {
     getMachineName(id) {
-      const machine =  this.reportMachines.find((machine) => machine.device_id === id)
+      const machine =  this.reportMachines.find((machine) => machine.device_id === parseInt(id))
 
       return machine ? machine.name : ''
     },
     isValidate(str) {
-      if (str !== '') {
-        return true
-      } else {
-        return false
-      }
+      return str !== ''
     },
     handleNext() {
       if (this.isValidate(this.reportTitle)) {
@@ -159,11 +156,10 @@ export default {
       }
     },
     handleExportReport() {
-      const filepath = process.env.VUE_APP_SERVER_API_ENDPOINT.slice(0, -3) + 'assets/app/reports/' + this.reportName + '.xlsx'
-
       const filename = this.reportName + '.xlsx'
+      const filepath = this.$REPORTS_URL + filename
 
-      this.$download(filepath, this.reportName)
+      this.$download(filepath, filename)
       this.generateCompleted = false
       this.$emit('handleResetCreating')
     },

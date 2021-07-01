@@ -3,7 +3,7 @@
     <v-sheet color="surface2" class="my-n8 pt-9 py-7">
       <v-container class="pb-0">
         <div v-if="$route.name === 'acs-machines'" class="d-flex mt-2 align-center">
-          <v-breadcrumbs :items="breadcrumbItems">
+          <v-breadcrumbs :items="acsBreadcrumbItems">
             <template v-slot:item="{ item }">
               <v-breadcrumbs-item
                 :disabled="item.disabled"
@@ -19,7 +19,7 @@
           >
           </company-menu>
         </div>
-
+        <v-breadcrumbs v-else :items="breadcrumbItems"></v-breadcrumbs>
         <top-card></top-card>
       </v-container>
     </v-sheet>
@@ -78,16 +78,22 @@ export default {
       locations: (state) => state.locations.data,
       companies: (state) => state.companies.companies,
       selectedCompanyName: (state) => state.machines.selectedCompany ? state.machines.selectedCompany.name : '',
-      selectedCompany: (state) => state.machines.selectedCompany
+      selectedCompany: (state) => state.machines.selectedCompany,
+      userCompanyName: (state) => state.auth.user.companyName
     }),
-    ...mapGetters('auth', ['canViewCompanies']),
-    breadcrumbItems() {
+    ...mapGetters('auth', ['canViewCompanies', 'isAcsUser']),
+    acsBreadcrumbItems() {
       return [
         {
           text: this.selectedCompanyName,
           disabled: true
-        }, {
-          text: 'Dashboard',
+        }
+      ]
+    },
+    breadcrumbItems() {
+      return [
+        {
+          text: this.userCompanyName,
           disabled: true
         }
       ]
@@ -98,25 +104,35 @@ export default {
       await this.initAcsDashboard()
     this.getZones()
     this.initLocationsTable({ companyId: this.selectedCompany ? this.selectedCompany.id : 0 })
+
+    if (!(this.isAcsUser && this.selectedCompany && this.selectedCompany.id === 0)) {
+      this.getAlarmsReports({
+        companyId: this.selectedCompany ? this.selectedCompany.id : 0
+      })
+    }
+
+    const now = new Date().getTime()
+    const nowMinus24Hours = now - 60 * 60 * 24 * 1000
+
     this.getDowntimeGraphData({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
 
     this.getDowntimeByTypeGraphSeries({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
 
     this.getDowntimeByReasonGraphSeries({
       company_id: this.selectedCompany ? this.selectedCompany.id : 0,
       location_id: 0,
-      to: new Date().getTime(),
-      from: new Date().getTime() - 60 * 60 * 24 * 1000
+      from: nowMinus24Hours,
+      to: now
     })
   },
   methods: {
@@ -144,32 +160,37 @@ export default {
         company_id: this.selectedCompany ? this.selectedCompany.id : 0
       })
 
-      // this.getAlarmsReports({
-      //   companyId: this.selectedCompany ? this.selectedCompany.id : 0
-      // })
+      if (!(this.isAcsUser && this.selectedCompany && this.selectedCompany.id === 0)) {
+        this.getAlarmsReports({
+          companyId: this.selectedCompany ? this.selectedCompany.id : 0
+        })
+      }
+
+      const now = new Date().getTime()
+      const nowMinus24Hours = now - 60 * 60 * 24 * 1000
 
       this.getDowntimeGraphData({
         company_id: this.selectedCompany ? this.selectedCompany.id : 0,
         location_id: 0,
         zone_id: 0,
-        to: new Date().getTime(),
-        from: new Date().getTime() - 60 * 60 * 24 * 1000
+        from: nowMinus24Hours,
+        to: now
       })
 
       this.getDowntimeByTypeGraphSeries({
         company_id: this.selectedCompany ? this.selectedCompany.id : 0,
         location_id: 0,
         zone_id: 0,
-        to: new Date().getTime(),
-        from: new Date().getTime() - 60 * 60 * 24 * 1000
+        from: nowMinus24Hours,
+        to: now
       })
 
       this.getDowntimeByReasonGraphSeries({
         company_id: this.selectedCompany ? this.selectedCompany.id : 0,
         location_id: 0,
         zone_id: 0,
-        to: new Date().getTime(),
-        from: new Date().getTime() - 60 * 60 * 24 * 1000
+        from: nowMinus24Hours,
+        to: now
       })
     }
   }

@@ -23,10 +23,10 @@
         <downtime-data-table @closed="showDowntimeTable=false"></downtime-data-table>
       </v-dialog>
     </v-card-title>
-    <v-card-text>
+    <v-card-text style="padding-bottom: 50px;">
       <apexchart
         :options="chartOptions"
-        height="400"
+        height="370"
         :series="getDowntimeByTypeSeries"
       ></apexchart>
     </v-card-text>
@@ -36,7 +36,6 @@
 <script>
 import { mapActions, mapState, mapGetters } from 'vuex'
 import DowntimeDataTable from './product/DowntimeDataTable'
-
 export default {
   components: {
     DowntimeDataTable
@@ -45,7 +44,7 @@ export default {
     return {
       selectedTimeRange: {},
       showChart: true,
-      showDowntimeTable:false
+      showDowntimeTable: false
     }
   },
   computed: {
@@ -86,11 +85,16 @@ export default {
             show: false
           }
         },
+        colors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, this.$vuetify.theme.themes.light.error],
         legend: {
           position: 'bottom',
-          offsetY: 10
+          markers: {
+            radius: 12,
+            offsetY: 40
+          }
         },
         fill: {
+          colors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, this.$vuetify.theme.themes.light.error],
           opacity: 1
         }
       }

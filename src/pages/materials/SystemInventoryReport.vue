@@ -125,7 +125,7 @@ export default {
           timeRange: this.timeRange
         })
 
-        const filepath = process.env.VUE_APP_SERVER_API_ENDPOINT.slice(0, -3) + 'assets/app/reports/' + response.filename
+        const filepath = this.$REPORTS_URL + response.filename
 
         this.$download(filepath, response.filename)
       } catch (err) {
@@ -154,9 +154,10 @@ export default {
     },
     getTimeRange() {
       if (this.selectedTimeRange && this.selectedTimeRange.timeRangeOption !== 'custom') {
+        const TODAY = new Date().toISOString().substr(0, 10) // YYYY-MM-DD
         const tR = {
           timeRangeOption: this.selectedTimeRange.timeRangeOption,
-          dates: [new Date().toISOString().substr(0, 10), new Date().toISOString().substr(0, 10)]
+          dates: [TODAY, TODAY]
         }
 
         const from = new Date(this.timeRangeFromTo(tR).from).toISOString()

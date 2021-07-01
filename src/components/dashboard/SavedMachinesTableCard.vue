@@ -48,7 +48,7 @@
           <v-icon small color="primary">$mdi-wrench</v-icon>
           {{ header.text }}
         </template>
-        <template v-slot:header.capacity="{ header }">
+        <template v-slot:header.capacityUtilization="{ header }">
           <v-icon color="primary">$mdi-trending-up</v-icon>
           {{ header.text | percentageLabel }}
         </template>
@@ -59,22 +59,30 @@
 
         <!-- -->
         <template v-slot:item.status="{ item }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item-avatar
-                class="mr-1"
-                :color="getColor(item)"
-                size="25"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon small>
-                  {{ getIcon(item) }}
-                </v-icon>
-              </v-list-item-avatar>
-            </template>
-            <span>{{ getText(item) }}</span>
-          </v-tooltip>
+          <v-chip color="grey lighten-4" dense>
+            <v-tooltip v-for="(status, index) in item.status" :key="index" bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-avatar
+                  class="ml-0 mr-0"
+                  v-bind="attrs"
+                  :color="getColor(status)"
+                  v-on="on"
+                >
+                  <v-icon
+                    small
+                  >
+                    {{ getIcon(status) }}
+                  </v-icon>
+                </v-avatar>
+              </template>
+              <span>{{ getText(status) }}</span>
+            </v-tooltip>
+          </v-chip>
+        </template>
+        <template v-slot:item.capacityUtilization="{ item }">
+          <div v-if="item && item.capacityUtilization" class="mx-auto d-flex justify-center">
+            <span>{{ getCapacityUtilizationValue(item.capacityUtilization) }}</span>
+          </div>
         </template>
         <template v-slot:item.configuration="{ item }">
           <span v-if="item.configuration">{{ item.configuration.name }}</span>
@@ -121,7 +129,7 @@ export default {
         { text: 'Running', align: 'center', value: 'status' },
         { text: 'Machine Name', align: 'start', value: 'name' },
         { text: 'Machine Type', align: 'start', value: 'configuration' },
-        { text: 'Capacity Utilization', align: 'center', value: 'capacity' },
+        { text: 'Capacity Utilization', align: 'center', value: 'capacityUtilization' },
         { text: 'Locations', align: 'center', value: 'location_id' },
         { text: 'Zones', align: 'center', value: 'zone_id' }
       ],
@@ -138,25 +146,91 @@ export default {
         'Zones'
       ],
       deviceStatus: {
-        running: {
+        machineRunning: {
           color: 'green',
-          text: 'Running',
+          text: 'Machine Running',
           icon: '$mdi-check-circle-outline'
         },
         routerNotConnected: {
           color: 'yellow',
-          text: 'Router Not Connected',
+          text: 'Router No Communication',
           icon: '$mdi-wifi-off'
         },
-        shutOff: {
-          color: 'red',
-          text: 'Shut Off',
+        machineStopped: {
+          color: 'grey',
+          text: 'Machine Stopped',
           icon: '$mdi-block-helper'
         },
+        machineIdle: {
+          color: 'grey',
+          text: 'Machine Idle - No Demand',
+          icon: '$mdi-block-helper'
+        },
+        machineStoppedActiveAlarm: {
+          color: 'red',
+          text: 'Machine Stopped - Active Alarm',
+          icon: '$mdi-block-helper'
+        },
+        machineRunningAlert: {
+          color: 'yellow',
+          text: 'Machine Running - Alert',
+          icon: '$mdi-alert-outline'
+        },
         plcNotConnected: {
-          color: 'orange',
-          text: 'PLC Not Connected',
+          color: 'red',
+          text: 'PLC No Communication',
           icon: '$mdi-database-remove'
+        },
+        machineRunningThreshold: {
+          color: 'red',
+          text: 'Machine Running - Threshold Alert',
+          icon: '$mdi-alert-outline'
+        }
+      },
+      utilizationOptions: {
+        chart: {
+          type: 'area',
+          animations: {
+            speed: 400
+          },
+          toolbar: {
+            show: false
+          }
+        },
+        colors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, '#00E396', '#FEB019', '#FF4560', '#775DD0'],
+        noData: {
+          text: 'No Data From Devce'
+        },
+        yaxis: {
+          floating: true,
+          labels: {
+            show: false
+          },
+          title: {
+            text: undefined
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        xaxis: {
+          type: 'datetime',
+          axisBorder: {
+            show: false
+          },
+          labels: {
+            show: false
+          }
+        },
+        legend: {
+          show: false
+        },
+        grid: {
+          show: false
         }
       }
     }
@@ -190,14 +264,17 @@ export default {
       getSavedMachines: 'devices/getSavedMachines'
     }),
     open(item) { },
-    getColor (item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].color : ''
+    getColor (status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].color : ''
     },
-    getText(item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].text : ''
+    getText(status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].text : ''
     },
-    getIcon(item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].icon : ''
+    getIcon(status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].icon : ''
+    },
+    getCapacityUtilizationValue(item) {
+      return (item[0].length === 0) ? 'No Data From Device' : `${item[0][item[0].length - 1][1]} %`
     },
     productView(item) {
       if (item.location_id && item.zone_id) {
