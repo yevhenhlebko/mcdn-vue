@@ -17,23 +17,19 @@
         <template v-slot:item.name="{ item }">
           <span class="primary--text font-weight-bold">{{ item.name }}</span>
         </template>
-        <template v-slot:item.rate="{ item }">
-          <production-rate-chart
-            :height="120"
-            :series="[item.rate]"
-          >
-          </production-rate-chart>
+        <template v-slot:item.alarmsCount="{ item }">
+          <span class="font-weight-bold" :class="getAlarmsTextColor(item.alarmsCount)">{{ getAlarmsCount(item.alarmsCount) }}</span>
         </template>
-        <template v-slot:item.utilization="{ item }">
-          <div class="d-flex justify-center align-center mx-auto" style="width: 180px;">
+        <template v-slot:item.downtimeAvailability="{ item }">
+          <div class="d-flex justify-center mx-auto" style="width: 180px;">
             <apexchart
+              key="availability-chart"
               type="line"
               width="160"
-              :options="utilizationChartOptions"
-              :series="utilizationSeries"
+              :options="availabilityChartOptions"
+              :series="item.downtimeAvailability"
             >
             </apexchart>
-            {{ item.utilization }}
           </div>
         </template>
         <template v-slot:item.downtimeByReason="{ item }">
@@ -41,6 +37,7 @@
             <no-downtime v-if="hasNoDowntime(item.downtimeByReason)"></no-downtime>
             <apexchart
               v-else
+              key="downtime-chart"
               width="240"
               height="80"
               :options="getSeriesOptions(item.downtimeByReason)"
@@ -60,33 +57,32 @@
 
 <script>
 
-import ProductionRateChart from '../charts/ProductionRateChart'
 import NoDowntime from './DashboardTableNoDowntime'
 import DowntimeLegend from './DashboardTableDowntimeLegend'
 
 const seriesColors = [{
   name: 'No Demand',
-  color: '#a4bcbb'
+  color: '#eeeeef'
 }, {
   name: 'Preventative Maintenance',
-  color: '#508FF0'
+  color: '#0f2d52'
 }, {
   name: 'Machine Failure',
-  color: '#06d6a0'
+  color: '#29b1b8'
 }, {
   name: 'Power Outage',
-  color: '#505554'
+  color: '#5a5d61'
 }, {
   name: 'Other',
-  color: '#ffd166'
+  color: '#c8c62e'
 }, {
   name: 'Change Over',
-  color: '#ea344e'
+  color: '#623666'
 }]
 
 export default {
   components: {
-    ProductionRateChart, NoDowntime, DowntimeLegend
+    NoDowntime, DowntimeLegend
   },
   props: {
     loading: {
@@ -148,11 +144,7 @@ export default {
           show: false
         }
       },
-      utilizationSeries: [{
-        name: 'OEE',
-        data: [10, 35, 41]
-      }],
-      utilizationChartOptions: {
+      availabilityChartOptions: {
         chart: {
           type: 'line',
           zoom: {
@@ -162,7 +154,7 @@ export default {
             show: false
           }
         },
-        colors: [this.$vuetify.theme.themes.light.primary],
+        colors: ['#FF1654', '#247BA0'],
         layout: {
           padding: {
             top: -30,
@@ -210,6 +202,9 @@ export default {
               borderColor: '#00E396'
             }
           ]
+        },
+        legend: {
+          show: false
         }
       }
     }
@@ -218,9 +213,9 @@ export default {
     headers() {
       return [
         { text: this.headerLabel, value: 'name' },
-        { text: 'Alarms', align: 'center', value: 'alarms' },
+        { text: 'Alarms', align: 'center', value: 'alarmsCount' },
         { text: 'Downtime By Reason', align: 'center', value: 'downtimeByReason', sortable: false },
-        { text: 'Availability', align: 'center', value: 'utilization' }
+        { text: 'Availability', align: 'center', value: 'downtimeAvailability' }
       ]
     },
     headerLabel() {
@@ -287,6 +282,14 @@ export default {
           opacity: 1
         }
       }
+    },
+
+    getAlarmsCount(count) {
+      return count ? `${count} alarms reported` : 'No alarms reported'
+    },
+
+    getAlarmsTextColor(count) {
+      return count ? 'error--text' : 'success--text'
     },
 
     rowClicked(item) {

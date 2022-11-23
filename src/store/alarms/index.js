@@ -1,6 +1,7 @@
 import alarmAPI from '../../services/api/alarm'
-const now = new Date('YYYY-MM-DD')
-const dateTimeIsoString = new Date().toISOString().substr(0, 10)
+import * as Sentry from '@sentry/vue'
+
+const TODAY = new Date().toISOString().substr(0, 10) // YYYY-MM-DD
 
 const module = {
   namespaced: true,
@@ -13,7 +14,8 @@ const module = {
     selectedMachineName: {},
     isAlarmsReportLoading: false,
     alarmsReports: {},
-    timeRageOptions: [
+    alarmsCount: 0,
+    timeRangeOptions: [
       {
         label: 'Last 30 minutes',
         value: 'last30Min'
@@ -63,8 +65,8 @@ const module = {
     alamrsPerMachine: [],
 
     timeRange: 'last24Hours',
-    dateFrom: dateTimeIsoString,
-    dateTo: dateTimeIsoString,
+    dateFrom: TODAY,
+    dateTo: TODAY,
     timeFrom: '00:00',
     timeTo: '00:00',
 
@@ -78,7 +80,7 @@ const module = {
 
         commit('SET_ALARMS_OVERVIEW', response)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
         throw error
       }
     },
@@ -89,20 +91,20 @@ const module = {
 
         commit('SET_ALARMS_PER_CUSTOMER_CONFIGURATION', response.alarm_types)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
         throw error
       }
     },
 
     async getAlarmsByMachine({ commit }) {
       commit('SET_LOADING_ALARMS_PER_MACHINE', true)
-      
+
       try {
         const response = await alarmAPI.getAlarmsByMachine()
 
         commit('SET_ALARMS_PER_MACHINE', response.devices)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
 
       commit('SET_LOADING_ALARMS_PER_MACHINE', false)
@@ -117,7 +119,7 @@ const module = {
         commit('SET_ALARMS', response.alarms)
         commit('ALARMS_LOADED')
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -127,7 +129,7 @@ const module = {
 
         commit('SET_ALARM_TYPES', response.alarm_types)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -137,7 +139,7 @@ const module = {
 
         commit('SET_ALARMS', response.alarms)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -147,7 +149,7 @@ const module = {
 
         commit('SET_SEVERITY', response.severity)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -166,7 +168,7 @@ const module = {
 
         commit('SET_ALARMS_PER_TYPE', response.alarms)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -179,23 +181,23 @@ const module = {
       } else {
         data.machine_name = state.selectedMachineName['Alarms Distribution']
       }
-      
+
       try {
         const response = await alarmAPI.getAlarmsDistributionByMachine(data)
 
         commit('SET_ALARMS_DISTRIBUTION', response.results)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
     async getAlarmsAmountPerMachineByCompanyId({ commit }, data ) {
       try {
         const response = await alarmAPI.getAlarmsAmountPerMachineByCompanyId(data)
-        
+
         commit('SET_ALARMS_AMOUNT_PER_MACHINE', response.results)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       }
     },
 
@@ -206,7 +208,7 @@ const module = {
 
         commit('SET_ALARMS_REPORTS', response)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       } finally {
         commit('SET_ALARMS_REPORTS_LOADING', false)
       }
@@ -282,7 +284,7 @@ const module = {
       state.timeTo = params.timeTo
       state.timeFrom = params.timeFrom
     },
-    
+
     ALARMS_LOADING(state) {
       state.isLoading = true
     },
@@ -297,17 +299,15 @@ const module = {
     },
 
     SET_ALARMS_REPORTS(state, data) {
-      state.alarmsReports = data
+      state.alarmsReports = data.active_alarms
+      state.alarmsCount = data.alarmsCount
     }
   },
 
   getters: {
     timeRangeLabel(state) {
-      if (state.timeRange !== 'custom') {
-        return state.timeRageOptions.find((range) => range.value === state.timeRange).label
-      } else {
-        return state.dateFrom + ' ' + state.timeFrom + ' ~ ' + state.dateTo + ' ' + state.timeTo
-      }
+      return state.timeRange !== 'custom' ? state.timeRageOptions.find((range) => range.value === state.timeRange).label :
+        `${state.dateFrom} ${state.timeFrom} ~ ${state.dateTo} ${state.timeTo}`
     }
   }
 }

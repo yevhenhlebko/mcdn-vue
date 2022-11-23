@@ -17,22 +17,25 @@
           {{ header.text }}
         </template>
         <template v-slot:item.status="{ item }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on, attrs }">
-              <v-list-item-avatar
-                class="mr-1"
-                :color="getColor(item)"
-                size="25"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon small>
-                  {{ getIcon(item) }}
-                </v-icon>
-              </v-list-item-avatar>
-            </template>
-            <span>{{ getText(item) }}</span>
-          </v-tooltip>
+          <v-chip color="grey lighten-4" dense>
+            <v-tooltip v-for="(status, index) in item.status" :key="index" bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-avatar
+                  class="ml-0 mr-0"
+                  v-bind="attrs"
+                  :color="getColor(status)"
+                  v-on="on"
+                >
+                  <v-icon
+                    small
+                  >
+                    {{ getIcon(status) }}
+                  </v-icon>
+                </v-avatar>
+              </template>
+              <span>{{ getText(status) }}</span>
+            </v-tooltip>
+          </v-chip>
         </template>
         <template v-slot:header.customer_assigned_name="{ header }">
           <v-icon small color="primary">$mdi-wrench</v-icon>
@@ -51,29 +54,28 @@
           >
           </production-rate-chart>
         </template>
-        <template v-slot:item.utilization="{ item }">
-          <div class="d-flex align-center mx-auto" style="width: 180px;">
+        <template v-slot:item.downtimeAvailability="{ item }">
+          <div class="d-flex justify-center mx-auto" style="width: 180px;">
             <apexchart
+              key="availability-chart"
               type="line"
-              width="100%"
-              height="100"
-              :options="utilizationChartOptions"
-              :series="utilizationSeries"
+              width="160"
+              :options="availabilityChartOptions"
+              :series="item.downtimeAvailability"
             >
             </apexchart>
-            {{ item.utilization }}
           </div>
         </template>
-        <template v-slot:item.downtimeDistribution="{ item }">
-          <div v-if="item && item.downtimeDistribution" class="d-flex align-end justify-end">
-            <no-downtime v-if="hasNoDowntime(item.downtimeDistribution)"></no-downtime>
+        <template v-slot:item.downtimeByReason="{ item }">
+          <div v-if="item && item.downtimeByReason" class="d-flex justify-center">
+            <no-downtime v-if="hasNoDowntime(item.downtimeByReason)"></no-downtime>
             <apexchart
               v-else
-              type="bar"
+              key="downtime-chart"
               width="240"
               height="80"
-              :options="chartOptions"
-              :series="downtimeDistribution(item.downtimeDistribution)"
+              :options="getSeriesOptions(item.downtimeByReason)"
+              :series="getDowntimeSeries(item.downtimeByReason)"
             >
             </apexchart>
           </div>
@@ -102,6 +104,26 @@ import ProductionRateChart from '../charts/ProductionRateChart'
 import NoDowntime from './DashboardTableNoDowntime'
 import DowntimeLegend from './DashboardTableDowntimeLegend'
 
+const seriesColors = [{
+  name: 'No Demand',
+  color: '#eeeeef'
+}, {
+  name: 'Preventative Maintenance',
+  color: '#012d52'
+}, {
+  name: 'Machine Failure',
+  color: '#29b1b8'
+}, {
+  name: 'Power Outage',
+  color: '#5a5d61'
+}, {
+  name: 'Other',
+  color: '#c8c62e'
+}, {
+  name: 'Change Over',
+  color: '#623666'
+}]
+
 export default {
   components: {
     ProductionRateChart, NoDowntime, DowntimeLegend
@@ -114,32 +136,49 @@ export default {
         { text: 'Running', value: 'status' },
         { text: 'Machines', value: 'customer_assigned_name' },
         { text: 'Machine Type', value: 'configuration' },
-        { text: 'Utilization', align: 'center', value: 'utilization' },
-        { text: 'OEE', align: 'start', value: 'oee' },
-        { text: 'Actual Performance', align: 'center', value: 'performance' },
-        { text: 'Prod Rate', value: 'rate', align: 'center', width: '1%', class: 'prod-rate-header' },
-        { text: 'Downtime Distrubton', align: 'center', value: 'downtimeDistribution', sortable: false, width: '1%' }
+        { text: 'Downtime By Reason', align: 'center', value: 'downtimeByReason', sortable: false },
+        { text: 'Availability', align: 'center', value: 'downtimeAvailability' }
       ],
       deviceStatus: {
-        running: {
+        machineRunning: {
           color: 'green',
-          text: 'Running',
+          text: 'Machine Running',
           icon: '$mdi-check-circle-outline'
         },
         routerNotConnected: {
           color: 'yellow',
-          text: 'Router Not Connected',
+          text: 'Router No Communication',
           icon: '$mdi-wifi-off'
         },
-        shutOff: {
-          color: 'red',
-          text: 'Shut Off',
+        machineStopped: {
+          color: 'grey',
+          text: 'Machine Stopped',
           icon: '$mdi-block-helper'
         },
+        machineIdle: {
+          color: 'grey',
+          text: 'Machine Idle - No Demand',
+          icon: '$mdi-block-helper'
+        },
+        machineStoppedActiveAlarm: {
+          color: 'red',
+          text: 'Machine Stopped - Active Alarm',
+          icon: '$mdi-block-helper'
+        },
+        machineRunningAlert: {
+          color: 'yellow',
+          text: 'Machine Running - Alert',
+          icon: '$mdi-alert-outline'
+        },
         plcNotConnected: {
-          color: 'orange',
-          text: 'PLC Not Connected',
+          color: 'red',
+          text: 'PLC No Communication',
           icon: '$mdi-database-remove'
+        },
+        machineRunningThreshold: {
+          color: 'red',
+          text: 'Machine Running - Threshold Alert',
+          icon: '$mdi-alert-outline'
         }
       },
       searchQuery: '',
@@ -163,10 +202,6 @@ export default {
             }
           }
         },
-        stroke: {
-          width: 1,
-          colors: ['#fff']
-        },
         xaxis: {
           axisBorder: {
             show: false
@@ -176,6 +211,7 @@ export default {
           }
         },
         yaxis: {
+          floating: true,
           labels: {
             show: false
           },
@@ -194,11 +230,7 @@ export default {
         }
       },
 
-      utilizationSeries: [{
-        name: 'OEE',
-        data: [10, 35, 41]
-      }],
-      utilizationChartOptions: {
+      availabilityChartOptions: {
         chart: {
           height: 350,
           type: 'line',
@@ -209,7 +241,7 @@ export default {
             show: false
           }
         },
-        colors: [this.$vuetify.theme.themes.light.primary],
+        colors: ['#FF1654', '#247BA0'],
         dataLabels: {
           enabled: false
         },
@@ -247,6 +279,9 @@ export default {
               borderColor: '#00E396'
             }
           ]
+        },
+        legend: {
+          show: false
         }
       }
     }
@@ -279,38 +314,63 @@ export default {
         itemsPerPage: this.itemsPerPage
       })
     },
-    hasNoDowntime(distribution) {
+    hasNoDowntime(data) {
       let sum = 0
 
-      sum += distribution.reduce((a, b) => a + b, 0)
+      data.map((item) => {
+        sum += item.data
+
+        return sum
+      })
       
       return sum === 0
     },
+    getDowntimeSeries(data) {
+      const series = []
 
-    downtimeDistribution(distribution) {
-      return [
-        {
-          name: 'Name',
-          data: [distribution[1]]
-        },
-        {
-          name: 'Name',
-          data: [distribution[0]]
-        },
-        {
-          name: 'Name',
-          data: [distribution[2]]
+      data.map((item) => {
+        const temp = {
+          name: item.name,
+          data: [item.data]
         }
-      ]
+
+        series.push(temp)
+
+        return 0
+      })
+
+      return series
     },
-    getColor(item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].color : ''
+    getSeriesOptions(series) {
+      const _colors = []
+
+      series.map((item) => {
+        const seriesColor = seriesColors.find((data) => {
+          return data.name === item.name
+        })
+
+        _colors.push(seriesColor ? seriesColor.color : '#fff')
+
+        return _colors
+      })
+
+      return {
+        ...this.chartOptions,
+        colors: _colors,
+        fill: {
+          colors: _colors,
+          opacity: 1
+        }
+      }
     },
-    getIcon(item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].icon : ''
+    getColor(status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].color : ''
     },
-    getText(item) {
-      return this.deviceStatus[item.status] ? this.deviceStatus[item.status].text : ''
+    getIcon(status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].icon : ''
+    },
+    getText(status) {
+      return this.deviceStatus[status] ? this.deviceStatus[status].text : ''
     }
   }
 }

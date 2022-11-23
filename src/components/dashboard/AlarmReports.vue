@@ -3,30 +3,29 @@
     max-width="900"
     class="mx-auto"
   >
-    <v-card-title class="primary white--text">Alarm Reports</v-card-title>
+    <v-card-title class="primary white--text">Alarms</v-card-title>
     <v-list
       subheader
       two-line
     >
       <template v-for="(alarm, index) in activeAlarms">
         <v-list-item
-          :key="Number(`${alarm.id}${index}`)"
+          :key="`${alarm.alarmName}${alarm.device_id}`"
         >
-  
+
           <v-list-item-content>
-            <v-list-item-title v-text="alarm.machine_name"></v-list-item-title>
-  
-            <v-list-item-subtitle class="text--primary" v-text="alarm.machine_info ? alarm.machine_info.name : ''"></v-list-item-subtitle>
-            <v-list-item-subtitle class="red--text" v-text="alarm.alarm_name"></v-list-item-subtitle>
+            <v-list-item-title v-text="alarm.machineName"></v-list-item-title>
+
+            <v-list-item-subtitle class="text--primary" v-text="alarm.deviceData.name"></v-list-item-subtitle>
+            <v-list-item-subtitle class="red--text" v-text="alarm.alarmName"></v-list-item-subtitle>
           </v-list-item-content>
-  
+
           <v-list-item-action>
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn icon @click="handleClick(alarm.machine_info)">
+                <v-btn icon @click="handleClick(alarm)">
                   <v-icon
                     color="primary lighten-1"
-                    :disabled="alarm.machine_info === null"
                     v-bind="attrs"
                     v-on="on"
                   >$mdi-eye</v-icon>
@@ -35,7 +34,7 @@
               <span>See Machine Details</span>
             </v-tooltip>
           </v-list-item-action>
-          
+
         </v-list-item>
         <v-divider
           v-if="index < activeAlarms.length - 1"
@@ -52,18 +51,6 @@
 <script>
 export default {
   props: {
-    // markers: {
-    //   type: Array,
-    //   default: () => {
-    //     return []
-    //   }
-    // }
-    alarmsReports: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
     activeAlarms: {
       type: Array,
       default: () => {
@@ -77,14 +64,14 @@ export default {
   },
   methods: {
     handleClick(item) {
-      if (item.location_id && item.zone_id) {
+      if (item.deviceData.location_id && item.deviceData.zone_id) {
         this.$router.push({
           name: 'dashboard-product',
           params: {
-            location: item.location_id,
-            zone: item.zone_id,
+            location: item.deviceData.location_id,
+            zone: item.deviceData.zone_id,
             configurationId: item.machine_id,
-            productId: item.serial_number
+            productId: item.device_id
           }
         })
       } else {
@@ -92,10 +79,12 @@ export default {
           name: 'product-details',
           params: {
             configurationId: item.machine_id,
-            productId: item.serial_number
+            productId: item.device_id
           }
         })
       }
+
+      this.$emit('close')
     }
   }
 }

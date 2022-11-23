@@ -41,76 +41,103 @@
         </div>
         <div>
           <h2 class="my-3">Conditions</h2>
-          <div class="">Conditions define when your rule is triggered. Aggregation is optional - use it to cluster your data and trigger rules based on a time window.</div>
+          <div class="">Conditions define when your rule is triggered.</div>
           <br>
           <v-form ref="conditionForm" v-model="conditionValid" :disabled="!selectedProduct || isLoadingMachineTags">
-            <v-row
-              v-for="(filter, i) in filters"
-              :key="i"
-            >
-              <v-col
-                cols="12"
-                sm="3"
-                class="py-0"
-              >
-                <v-select
-                  v-model="filter.telemetry"
-                  :items="machineTags"
-                  item-text="name"
-                  item-value="id"
-                  label="Select a telemetry"
-                  :rules="conditionRules"
-                  required
+            <div v-for="(filter, i) in filters" :key="i" class="d-flex align-center mb-5">
+              <div class="flex-grow-1">
+                <v-row>
+                  <v-col
+                    cols="12"
+                    sm="3"
+                    class="py-0"
+                  >
+                    <v-select
+                      v-model="filter.parameter"
+                      :items="machineTags"
+                      item-text="name"
+                      item-value="id"
+                      label="Select a parameter"
+                      :rules="[$rules.required]"
+                      required
+                    >
+                    </v-select>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    sm="3"
+                    class="py-0"
+                  >
+                    <v-select
+                      v-model="filter.operator"
+                      :items="operators"
+                      label="Select an operator"
+                      required
+                      :rules="[$rules.required]"
+                    >
+                    </v-select>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    sm="2"
+                    class="py-0"
+                  >
+                    <v-text-field
+                      v-model="filter.value"
+                      type="number"
+                      label="Select or enter a value"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    sm="2"
+                    class="py-0"
+                  >
+                    <v-text-field
+                      v-model="filter.approachingValue"
+                      type="number"
+                      label="Enter a approaching value"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    sm="2"
+                    class="py-0"
+                  >
+                    <v-select
+                      v-model="filter.isRunning"
+                      label="Select a parameter"
+                      :items="runningStatus"
+                      item-text="name"
+                      item-value="value"
+                    ></v-select>
+                  </v-col>
+                </v-row>
+              </div>
+              <div class="flex-shrink-0" style="width: 48px;">
+                <v-btn
+                  v-if="i !== 0"
+                  icon
+                  fab
+                  class="ml-2"
+                  elevation="2"
+                  x-small
+                  @click="filters.splice(i, 1)"
                 >
-                </v-select>
-              </v-col>
-              <v-col
-                cols="12"
-                sm="3"
-                class="py-0"
-              >
-                <v-select
-                  v-model="filter.operator"
-                  :items="operators"
-                  label="Select an operator"
-                  required
-                  :rules="conditionRules"
-                >
-                </v-select>
-              </v-col>
-              <v-col
-                cols="12"
-                sm="3"
-                class="py-0"
-              >
-                <v-text-field
-                  v-model="filter.value"
-                  type="number"
-                  label="Select or enter a value"
-                  required
-                  :rules="conditionRules"
-                ></v-text-field>
-              </v-col>
-              <v-col
-                cols="12"
-                sm="3"
-                class="py-0"
-              >
-                <v-text-field
-                  v-model="filter.approachingValue"
-                  type="number"
-                  label="Enter a approaching value"
-                ></v-text-field>
-              </v-col>
-            </v-row>
+                  <v-icon small>$mdi-close</v-icon>
+                </v-btn>
+              </div>
+            </div>
           </v-form>
-          <br>
-          <br>
           <v-btn
             @click="addFilter"
           >
             <v-icon left>$mdi-plus</v-icon>Condition
           </v-btn>
+        </div>
+        <div class="d-flex">
+          <v-checkbox v-model="isEmailChecked" class="mr-5" label="Notify by Email"></v-checkbox>
+          <v-checkbox v-model="isSmsChecked" label="Notify by SMS" :disabled="!isUserHasPhone"></v-checkbox>
         </div>
         <div>
           <v-btn
@@ -137,7 +164,7 @@
 |
 | Add a new threshold
 */
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapGetters } from 'vuex'
 
 import telemetries from './content/telemetries'
 import operators from './content/operators'
@@ -165,10 +192,11 @@ export default {
 
       filters: [
         {
-          telemetry: '',
+          parameter: '',
           operator: '',
           value: null,
-          approachingValue: null
+          approachingValue: null,
+          isRunning: null
         }
       ],
 
@@ -176,9 +204,16 @@ export default {
 
       conditionValid: true,
 
-      conditionRules: [
-        (v) => !!v || 'This field is required'
-      ]
+      runningStatus: [{
+        name: 'True',
+        value: true
+      }, {
+        name: 'False',
+        value: false
+      }],
+
+      isEmailChecked: false,
+      isSmsChecked: false
     }
   },
   computed: {
@@ -191,6 +226,7 @@ export default {
       products: (state) => state.machines.reportMachines,
       isAddingThreshold: (state) => state.thresholds.loading
     }),
+    ...mapGetters('auth', ['isUserHasPhone']),
     machineTags: {
       get() {
         return this.$store.state.thresholds.machineTags
@@ -230,10 +266,11 @@ export default {
     addFilter() {
       if (this.filters.length < 3) {
         this.filters.push({
-          telemetry: '',
+          parameter: '',
           operator: '',
           value: null,
-          approachingValue: null
+          approachingValue: null,
+          isRunning: null
         })
       }
     },
@@ -252,10 +289,11 @@ export default {
     handleProductChange() {
       this.filters = [
         {
-          telemetry: '',
+          parameter: '',
           operator: '',
           value: null,
-          approachingValue: null
+          approachingValue: null,
+          isRunning: null
         }
       ]
       this.getMachineTags({
@@ -265,18 +303,23 @@ export default {
     async handleSubmit() {
       await this.addThreshold({
         deviceId: this.selectedProduct,
-        conditions: this.filters
+        conditions: this.filters,
+        isEmailChecked: this.isEmailChecked,
+        isSmsChecked: this.isSmsChecked
       })
 
       this.selectedLocation = ''
       this.selectedZone = ''
       this.selectedProduct = ''
       this.filters = [{
-        telemetry: '',
+        parameter: '',
         operator: '',
         value: null,
-        approachingValue: null
+        approachingValue: null,
+        isRunning: null
       }]
+
+      this.$refs.conditionForm.resetValidation()
     }
   }
 }

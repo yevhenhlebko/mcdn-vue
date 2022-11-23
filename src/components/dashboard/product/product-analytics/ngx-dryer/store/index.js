@@ -1,4 +1,5 @@
 import api from '../services/api'
+import * as Sentry from '@sentry/vue'
 
 const module = {
   namespaced: true,
@@ -8,26 +9,29 @@ const module = {
     loadingOnlineHours: false,
 
     dryingHoppers: {},
+    ngxHopperCount: 0,
     bedStates: [],
     onlineHours: []
   },
 
   actions: {
-    async getDryingHopperStats({ state, commit }, payload) {
+    async getDryingHopperStats({ commit }, payload) {
       commit('SET_DRYING_HOPPERS', {})
+      commit('SET_NGX_HOPPER_COUNT', 0)
       commit('SET_LOADING_DRYING_HOPPERS', true)
 
       try {
         const response = await api.getDryingHopperStats(payload)
 
         commit('SET_DRYING_HOPPERS', response.data.states)
+        commit('SET_NGX_HOPPER_COUNT', response.data.numberOfHoppers)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       } finally {
         commit('SET_LOADING_DRYING_HOPPERS', false)
       }
     },
-    async getBedStates ({ state, commit }, payload) {
+    async getBedStates ({ commit }, payload) {
       commit('SET_LOADING_BED_STATES', true)
 
       try {
@@ -35,12 +39,12 @@ const module = {
 
         commit('SET_SET_BED_STATES', response.data.states)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       } finally {
         commit('SET_LOADING_BED_STATES', false)
       }
     },
-    async getOnlineHours ({ state, commit }, payload) {
+    async getOnlineHours ({ commit }, payload) {
       commit('SET_LOADING_ONLINE_HOURS', true)
 
       try {
@@ -48,7 +52,7 @@ const module = {
 
         commit('SET_SET_ONLINE_HOURS', response.data.hours)
       } catch (error) {
-        console.log(error)
+        Sentry.captureException(error)
       } finally {
         commit('SET_LOADING_ONLINE_HOURS', false)
       }
@@ -61,6 +65,7 @@ const module = {
     SET_LOADING_ONLINE_HOURS(state, isLoading) { state.loadingOnlineHours = isLoading },
 
     SET_DRYING_HOPPERS(state, values) { state.dryingHoppers = values },
+    SET_NGX_HOPPER_COUNT(state, values) { state.ngxHopperCount = values },
     SET_SET_BED_STATES(state, values) { state.bedStates = values },
     SET_SET_ONLINE_HOURS(state, values) { state.onlineHours = values }
   }

@@ -29,10 +29,14 @@
 
 <script>
 import { mapActions } from 'vuex'
-import barGraphStore from './store'
+import Store from './store'
+import dynamicStoreMixin from '../dynamicStoreMixin'
+
+const COMMON_GRAPHS = ['barGraph-id1', 'barGraph-portableChiller-id1', 'barGraph-t50-id1', 'barGraph-vtc-id1', 'barGraph-vtc-id3']
 
 export default {
   name: 'BarGraph',
+  mixins: [dynamicStoreMixin],
   props: {
     namespace: {
       type: String,
@@ -71,66 +75,62 @@ export default {
       default: () => {}
     }
   },
-  data() {
-    return {
-    }
-  },
   computed: {
+    Store() {
+      // dynamic vuex store generators for the mixin
+      return Store
+    },
+    state() {
+      return this.$store.state[this.namespace]
+    },
     isLoading() {
-      return this.$store.state[this.namespace]['isLoading']
+      return this.state['isLoading']
     },
     series() {
-      if (this.namespace === 'barGraph-id1' || this.namespace === 'barGraph-portableChiller-id1' || this.namespace === 'barGraph-t50-id1' || this.namespace === 'barGraph-vtc-id1' || this.namespace === 'barGraph-vtc-id3') {
-        const series = {
-          data: this.$store.state[this.namespace]['items']
-        }
+      if (COMMON_GRAPHS.includes(this.namespace)) {
+        const series = { data: this.state['items'] }
 
         return [series]
-        
-      } else if (this.namespace === 'barGraph-ngxDryer-id1' || this.namespace === 'barGraph-ngxDryer-id1') {
+
+      }
+
+      if (this.namespace === 'barGraph-ngxDryer-id1') {
         const hopperCategories = []
 
-        for (let i = 0; i < this.$store.state[this.namespace]['hopperCount']; i ++) {
+        for (let i = 0; i < this.state['hopperCount']; i ++) {
           hopperCategories.push(`Hopper ${i + 1}`)
         }
+
         const tempSeries = this.names.map((name, index) => {
           return {
             name,
             data: hopperCategories.map((category, id) => {
-              return this.$store.state[this.namespace]['items'][index] ? 
-                this.$store.state[this.namespace]['items'][index][Number(category.split(' ')[1]) - 1] : []
+              return this.state['items'][index] ?
+                this.state['items'][index][Number(category.split(' ')[1]) - 1] : []
             })
           }
         })
 
         return tempSeries
-      } else {
-        const arr = [[], []]
-
-        if (this.$store.state[this.namespace]['items'][0]) {
-          this.$store.state[this.namespace]['items'][0].forEach((item, index) => {
-            if (item !== 0 || this.$store.state[this.namespace]['items'][1][index] !== 0) {
-              arr[0].push(item)
-              arr[1].push(this.$store.state[this.namespace]['items'][1][index])
-            }
-          })
-        }
-
-        if (this.names.length)
-          return this.names.map((name, index) => {
-            return {
-              name,
-              data: (arr.length) ? (arr[index]) : []
-            }
-          })
-        else
-          return [{
-            data: arr ? arr : []
-          }] 
       }
+
+      const arr = [[], []]
+
+      if (this.state['items'][0]) {
+        this.state['items'][0].forEach((item, index) => {
+          if (item !== 0 || this.state['items'][1][index] !== 0) {
+            arr[0].push(item)
+            arr[1].push(this.state['items'][1][index])
+          }
+        })
+      }
+
+      return this.names.length
+        ? this.names.map((name, index) => ({ name, data: (arr.length) ? (arr[index]) : [] }))
+        : [{ data: arr ? arr : [] }]
     },
     graphUnit() {
-      return this.$store.state[this.namespace]['unit'] ? this.$store.state[this.namespace]['unit'] : ''
+      return this.state['unit'] ? this.state['unit'] : ''
     },
     chartOptions() {
       return {
@@ -146,7 +146,7 @@ export default {
           text: 'No Data From Devce'
         },
         fill: {
-          // colors: [this.$vuetify.theme.themes.light.primary, `${this.$vuetify.theme.themes.light.primary}90`, `${this.$vuetify.theme.themes.light.primary}50`],
+          colors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, this.$vuetify.theme.themes.light.error],
           // colors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, '#00E396', '#FEB019', '#FF4560', '#775DD0'],
           opacity: 0.9,
           type: 'solid'
@@ -177,10 +177,10 @@ export default {
           max: (this.seriesMax + 2) * 1.1
         },
         legend: {
-          show: true
-          // markers: {
-          //   fillColors: [this.$vuetify.theme.themes.light.primary, `${this.$vuetify.theme.themes.light.primary}90`, `${this.$vuetify.theme.themes.light.primary}50`]
-          // }
+          show: true,
+          markers: {
+            fillColors: [this.$vuetify.theme.themes.light.primary, this.$vuetify.theme.themes.light.secondary, this.$vuetify.theme.themes.light.error]
+          }
         },
         tooltip: {
           enabled: false
@@ -189,29 +189,29 @@ export default {
       }
     },
     filteredCategories() {
-      if (this.namespace === 'barGraph-id1' || this.namespace === 'barGraph-portableChiller-id1' || this.namespace === 'barGraph-t50-id1' || this.namespace === 'barGraph-vtc-id1' || this.namespace === 'barGraph-vtc-id3') {
-        return this.categories
-      } else if (this.namespace === 'barGraph-ngxDryer-id1') {
+      if (COMMON_GRAPHS.includes(this.namespace)) return this.categories
+
+      if (this.namespace === 'barGraph-ngxDryer-id1') {
         const hopperCategories = []
 
-        for (let i = 0; i < this.$store.state[this.namespace]['hopperCount']; i ++) {
+        for (let i = 0; i < this.state['hopperCount']; i ++) {
           hopperCategories.push(`Hopper ${i + 1}`)
         }
 
         return hopperCategories
-      } else {
-        const category = []
-
-        if (this.$store.state[this.namespace]['items'][0]) {
-          this.$store.state[this.namespace]['items'][0].forEach((item, index) => {
-            if (item !== 0 || this.$store.state[this.namespace]['items'][1][index] !== 0) {
-              category.push(this.categories[index])
-            }
-          })
-        }
-
-        return category
       }
+
+      const category = []
+
+      if (this.state['items'][0]) {
+        this.state['items'][0].forEach((item, index) => {
+          if (item !== 0 || this.state['items'][1][index] !== 0) {
+            category.push(this.categories[index])
+          }
+        })
+      }
+
+      return category
     },
     seriesMax() {
       let max = 0
@@ -227,11 +227,6 @@ export default {
       }
     }
   },
-  created() {
-    if (!this.isModuleCreated([this.namespace])) {
-      this.registerModule()
-    }
-  },
   mounted() {
     this.getSeries({ serialNumber: this.serialNumber, machineId: this.machineId })
   },
@@ -240,24 +235,7 @@ export default {
       getSeries(dispatch, payload) {
         return dispatch(this.namespace + '/getSeries', payload)
       }
-    }),
-    isModuleCreated(path) {
-      let m = this.$store._modules.root
-
-      return path.every((p) => {
-        m = m._children[p]
-
-        return m
-      })
-    },
-    registerModule() {
-      this.$store.registerModule(this.namespace, {
-        namespaced: true,
-        state: barGraphStore.barGraphState(),
-        actions: barGraphStore.barGraphActions(this.fetch),
-        mutations: barGraphStore.barGraphMutations()
-      })
-    }
+    })
   }
 }
 </script>
